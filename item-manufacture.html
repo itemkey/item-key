@@ -5,9 +5,451 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Item Key — item-manufacture</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
-</head>
-<body class="page page-manufacture">
 
+  <!-- extra shop polish: product modal + gallery -->
+<style>
+  /* ===== Product modal (details) — responsive & no-cut ===== */
+  body.modal-lock { overflow: hidden; }
+
+  .pmodal{
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: clamp(10px, 2.2vw, 22px);
+    background: rgba(255,255,255,.70);
+    backdrop-filter: blur(6px);
+  
+    /* subtle gothic motion */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .24s ease, visibility 0s linear .24s;
+  }
+  .pmodal[data-open="true"]{
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .24s ease;
+  }
+  
+    /* Key fix:
+     The old gallery used aspect-ratio: 4/5, so on wide screens it became TOO TALL and got cut.
+     Now the modal has a fixed viewport-based height, and the gallery scales INSIDE it. */
+  .pmodal__card{
+    width: min(1040px, 96vw);
+    height: min(92vh, 780px);
+    max-height: 92vh;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.14);
+    background: rgba(255,255,255,.95);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 0;
+  }
+
+  .pmodal__head{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: clamp(10px, 2vh, 14px) clamp(12px, 2.4vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,.08);
+  }
+  .pmodal__title{
+    display: grid;
+    gap: 6px;
+  }
+  .pmodal__title h3{
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .pmodal__title .sub{
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.55);
+  }
+
+  .pmodal__actions{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+    flex: 0 0 auto;
+  }
+
+  .pmodal__body{
+    padding: clamp(10px, 2.2vw, 16px);
+    overflow: hidden;            /* <- no vertical scrolling in normal cases */
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: clamp(10px, 2vw, 16px);
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  /* gallery */
+  .gallery{
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.86);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 1fr auto; /* main takes remaining height */
+    min-height: 0;
+  }
+
+  .gallery__main{
+    /* IMPORTANT: removed aspect-ratio so it won't grow too tall on wide screens */
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    background: linear-gradient(180deg, rgba(0,0,0,.018), transparent 60%);
+    display:grid;
+    place-items:center;
+    min-height: 0;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    background: linear-gradient(180deg, rgba(0,0,0,.018), transparent 60%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .gallery__main img{
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display:block;
+  }
+  .gallery__main .placeholder{
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.45);
+    padding: 24px 12px;
+    text-align:center;
+  }
+
+  /* thumbs fit in 1–2 rows, without scrolling */
+  .gallery__thumbs{
+    --thumb: clamp(46px, 6.5vw, 64px);
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    overflow: hidden; /* <- no scrolling */
+    border-top: 1px solid rgba(0,0,0,.05);
+    background: rgba(255,255,255,.78);
+    max-height: calc(var(--thumb) * 2 + 8px); /* two rows */
+    align-content: flex-start;
+  }
+  .thumb{
+    flex: 0 0 auto;
+    width: var(--thumb);
+    height: var(--thumb);
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.85);
+    cursor: pointer;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    user-select:none;
+  }
+  .thumb img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+  }
+  .thumb[data-active="true"]{
+    border-color: rgba(0,0,0,.26);
+    background: rgba(255,255,255,.96);
+  }
+
+  /* info */
+  .pinfo{
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.86);
+    padding: clamp(12px, 2.2vw, 14px);
+    display:grid;
+    gap: 12px;
+    align-content: start;
+    min-height: 0;
+  }
+  .pinfo__top{
+    display:flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+  }
+  .pinfo__price{
+    font-size: 12px;
+    letter-spacing: 2.2px;
+    white-space: nowrap;
+  }
+
+  /* clamp description so the whole modal always fits */
+  .pinfo__desc{
+    margin: 0;
+    font-size: clamp(11px, 1.2vw, 12.5px);
+    color: rgba(0,0,0,.72);
+    line-height: 1.45;
+    white-space: pre-wrap;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 9;
+    line-clamp: 9;
+    overflow: hidden;
+  }
+
+  .pinfo__actions{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    padding-top: 2px;
+  }
+
+  /* cards: strictly marketplace summary */
+  .card.card--shop{
+    cursor: pointer;
+    transition: border-color .18s ease, transform .18s ease, opacity .18s ease;
+  }
+  .card.card--shop:hover{
+    transform: translateY(-2px);
+    border-color: rgba(0,0,0,.18);
+    opacity: .98;
+  }
+  .card.card--shop .card__desc,
+  .card.card--shop .card__meta,
+  .card.card--shop .card__actions{
+    display:none !important;
+  }
+  .card.card--shop .card__body{ gap: 6px; }
+
+  /* mobile modal layout */
+  @media (max-width: 980px){
+    .pmodal__card{
+      width: min(720px, 96vw);
+      height: min(94vh, 980px);
+    }
+    .pmodal__body{ grid-template-columns: 1fr; }
+    .pinfo__desc{ -webkit-line-clamp: 7; line-clamp: 7; }
+    .gallery__thumbs{ max-height: calc(var(--thumb) * 2 + 8px); }
+  }
+
+  /* ultra-short screens: allow inner scroll to avoid any “cut” */
+  @media (max-height: 560px){
+    .pmodal__card{ height: 96vh; }
+    .pmodal__body{ overflow: auto; } /* only here */
+  }
+
+
+/* ===== Gothic motion add-ons (subtle, non-intrusive) ===== */
+.pmodal__card{
+  transform: translateY(10px) scale(.985);
+  opacity: 0;
+  transition: transform .24s ease, opacity .24s ease;
+  will-change: transform, opacity;
+}
+.pmodal[data-open="true"] .pmodal__card{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* grid + category switching */
+@keyframes gridIn {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+.grid.grid--anim{
+  animation: gridIn .24s ease;
+}
+
+@keyframes chipSelect{
+  from { transform: translateY(1px); filter: blur(1px); opacity: .86; }
+  to   { transform: translateY(0);   filter: blur(0);   opacity: 1; }
+}
+.chip[data-active="true"]{
+  animation: chipSelect .22s ease;
+}
+
+/* buttons */
+@keyframes btnConfirm{
+  0%   { transform: scale(1);   filter: blur(0); }
+  45%  { transform: scale(1.03); filter: blur(.2px); }
+  100% { transform: scale(1);   filter: blur(0); }
+}
+.btn.btn--added{
+  animation: btnConfirm .35s ease;
+}
+
+/* cart: animate whatever base styles change (transform/opacity/etc.) */
+.cart{
+  transition: transform .28s ease, opacity .28s ease, filter .28s ease;
+  will-change: transform, opacity;
+}
+@keyframes cartPulse{
+  0%   { filter: blur(0); }
+  55%  { filter: blur(.35px); }
+  100% { filter: blur(0); }
+}
+.cart.cart--pulse{
+  animation: cartPulse .55s ease;
+}
+
+@keyframes panelIn{
+  from { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);  filter: blur(0); }
+}
+.home-panel.home--anim,
+.market-toolbar.market--anim,
+.chips.chips--anim{
+  animation: panelIn .26s ease;
+}
+
+/* accessibility */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ===== Layout immunity (no overlap with edge bars) =====
+   Fixes: footer "manufacture · marketplace • pre-alpha" overlapping cards
+   by reserving safe space for top/bottom edge bars on ANY screen size. */
+.page-manufacture{
+  --edge-top-space: clamp(56px, 7vh, 96px);
+  --edge-bottom-space: clamp(56px, 7vh, 96px);
+}
+.page-manufacture .center-stage{
+  /* keep your structure, just add safe padding so fixed bars never sit on content */
+  padding-top: calc(var(--edge-top-space) + env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: calc(var(--edge-bottom-space) + env(safe-area-inset-bottom, 0px)) !important;
+  box-sizing: border-box;
+  min-height: 100svh;
+}
+.page-manufacture .shop-body{
+  /* extra safety for long grids */
+  padding-bottom: calc(var(--edge-bottom-space) + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* If edge bars are fixed/absolute in the global CSS, keep them on top but non-destructive */
+.page-manufacture .topbar.topbar--edge,
+.page-manufacture .bottombar.bottombar--edge{
+  z-index: 12;
+}
+
+/* Prevent text wrapping from unexpectedly growing the bottom bar into content */
+.page-manufacture .bottombar .hint{
+  white-space: nowrap;
+}
+@media (max-width: 520px){
+  .page-manufacture .bottombar{
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .page-manufacture .bottombar .hint{
+    white-space: normal;
+  }
+}
+
+/* ===== Image manager (admin) ===== */
+.imgmgr{
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.86);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.imgmgr__head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.imgmgr__title{
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.75);
+}
+.imgmgr__actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+.imgmgr__grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 10px;
+}
+.imgtile{
+  position: relative;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.90);
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+  display:grid;
+  place-items:center;
+}
+.imgtile img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+.imgtile__badge{
+  position:absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.92);
+  color: rgba(0,0,0,.70);
+}
+.imgtile__remove{
+  position:absolute;
+  right: 6px;
+  top: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.92);
+  color: rgba(0,0,0,.75);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+.imgtile__remove:hover{ background: rgba(255,255,255,1); }
+.imgmgr__empty{
+  padding: 12px 10px;
+  border: 1px dashed rgba(0,0,0,.14);
+  color: rgba(0,0,0,.55);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+</style>
+</head>
+
+<body class="page page-manufacture">
   <div class="outer-frame" aria-hidden="true"></div>
   <div class="rays" aria-hidden="true"></div>
   <div class="veil" aria-hidden="true"></div>
@@ -19,7 +461,7 @@
   </header>
 
   <aside class="rail rail--left" aria-label="Левое меню">
-    <a class="rail-link" href="item-manufacture.html"><span class="rail-link__title">item-manufacture</span></a>
+    <a class="rail-link" href="index.html" aria-label="Вернуться в item-key"><span class="rail-link__title">item-key</span></a>
     <a class="rail-link" href="item-crate.html"><span class="rail-link__title">item-crate</span></a>
   </aside>
 
@@ -38,7 +480,6 @@
               <div class="sub">marketplace · brand · guests</div>
             </div>
 
-            <!-- справа сверху: валюта + корзина (manager/admin нет) -->
             <div class="controls">
               <select id="currencySelect" class="select" aria-label="Валюта">
                 <option value="BYN" selected>BYN</option>
@@ -65,7 +506,6 @@
             </div>
           </div>
 
-          <!-- ВНИМАНИЕ: подкатегории должны быть НЕ в Дом -->
           <div id="sectionChips" class="chips" aria-label="Разделы">
             <button class="chip" type="button" data-cat="all" data-active="true">всё</button>
             <button class="chip" type="button" data-cat="верх">верх</button>
@@ -77,7 +517,6 @@
       </div>
 
       <div class="shop-body">
-        
         <!-- HOME -->
         <section id="homePanel" class="home-panel" aria-label="Дом">
           <div class="home-panel__grid">
@@ -176,7 +615,7 @@
     </div>
   </aside>
 
-  <!-- ADD CLOTHING MODAL -->
+  <!-- ADD CLOTHING MODAL (admin) -->
   <div class="modal" id="clothModal" data-open="false" aria-hidden="true">
     <div class="modal__card" role="dialog" aria-label="Add clothing">
       <div class="modal__head">
@@ -218,15 +657,31 @@
           <textarea class="input" name="desc" placeholder="детали, материал, посадка, смысл"></textarea>
         </label>
 
-        <label class="col-6">
-          image url (optional)
-          <input class="input" name="imageUrl" placeholder="https://...">
+        <label class="col-12">
+          image urls (optional, через запятую / перенос строки)
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input id="imageUrlsInput" class="input" name="imageUrls" placeholder="https://... , https://...">
+            <button id="addUrlsBtn" class="btn" type="button">add urls</button>
+          </div>
         </label>
 
-        <label class="col-6">
-          image file (optional)
-          <input class="input" type="file" name="imageFile" accept="image/*">
-        </label>
+        <div class="col-12">
+          <div class="imgmgr" id="imgMgr" aria-label="Image files manager">
+            <div class="imgmgr__head">
+              <div class="imgmgr__title">image files</div>
+              <div class="imgmgr__actions">
+                <button id="imgBrowseBtn" class="btn" type="button">browse</button>
+                <input id="imgFileInput" type="file" accept="image/*" multiple style="display:none;">
+                <button id="imgClearBtn" class="btn btn--ghost" type="button">clear</button>
+              </div>
+            </div>
+            <div class="imgmgr__hint helper">
+              Можно добавлять файлы частями: нажимай <b>browse</b> сколько угодно раз.
+              Нажми на превью — сделаешь его первой фоткой (cover). Крестик — удалить.
+            </div>
+            <div class="imgmgr__grid" id="imgPreviewGrid"></div>
+          </div>
+        </div>
 
         <div class="col-12" style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn btn--primary" type="submit">publish</button>
@@ -241,6 +696,968 @@
     </div>
   </div>
 
-  <script src="assets/js/main.js"></script>
+  <!-- PRODUCT DETAILS MODAL (buyers) -->
+  <div class="pmodal" id="productModal" data-open="false" aria-hidden="true">
+    <div class="pmodal__card" role="dialog" aria-label="Product details">
+      <div class="pmodal__head">
+        <div class="pmodal__title">
+          <h3 id="pName">product</h3>
+          <div class="sub" id="pMeta">—</div>
+        </div>
+        <div class="pmodal__actions">
+          <button id="pEdit" class="btn" type="button">edit</button>
+          <button id="pClose" class="btn" type="button">close</button>
+        </div>
+      </div>
+
+      <div class="pmodal__body">
+        <div class="gallery" aria-label="Gallery">
+          <div class="gallery__main" id="pMainWrap">
+            <div class="placeholder">image</div>
+          </div>
+          <div class="gallery__thumbs" id="pThumbs"></div>
+        </div>
+
+        <div class="pinfo" aria-label="Info">
+          <div class="pinfo__top">
+            <div class="pinfo__price" id="pPrice">0 BYN</div>
+            <div class="pill" id="pCategory">—</div>
+          </div>
+
+          <p class="pinfo__desc" id="pDesc"></p>
+
+          <div class="pinfo__actions">
+            <button id="pAdd" class="btn btn--primary" type="button">add to cart</button>
+          </div>
+
+          <div class="helper">
+            Нажми на карточку в сетке — откроется это окно. Вся страница под ним не кликается и размыта.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Active page highlight (simple)
+    (() => {
+      const path = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+      document.querySelectorAll("a[href]").forEach(a => {
+        const href = (a.getAttribute("href") || "").toLowerCase();
+        if (href === path) a.classList.add("is-active");
+      });
+    })();
+
+    /* =========================
+      ITEM-MANUFACTURE STORE
+      - grid: ONLY (first image + name + price)
+      - click card -> product modal (all images + desc + add to cart)
+      - localStorage db + cart
+      ========================= */
+    (() => {
+      if (!document.body.classList.contains("page-manufacture")) return;
+
+      const $ = (sel, root=document) => root.querySelector(sel);
+      const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+      // UI
+      const tabButtons = $$(".tab");
+      const chipWrap = $("#sectionChips");
+      const chipButtons = $$(".chip");
+      const searchInput = $("#shopSearch");
+      const currencySelect = $("#currencySelect");
+
+      const homePanel = $("#homePanel");
+      const grid = $("#productGrid");
+
+      const toolbar = $("#marketToolbar");
+      const scopePill = $("#marketScope");
+      const addClothBtn = $("#addClothBtn");
+      const saveDbBtn = $("#saveDbBtn");
+
+      const goItem = $("#goItem");
+      const goGuests = $("#goGuests");
+
+      // Cart UI
+      const cart = $("#cart");
+      const cartOpen = $("#cartOpen");
+      const cartClose = $("#cartClose");
+      const cartList = $("#cartList");
+      const cartCount = $("#cartCount");
+      const cartTotal = $("#cartTotal");
+
+      // Admin modal UI
+      const modal = $("#clothModal");
+      const modalClose = $("#clothClose");
+      const form = $("#clothForm");
+      const ownerHidden = $("#clothOwner");
+      const exportDbBtn = $("#exportDbBtn");
+      const importDbInput = $("#importDbInput");
+      const clearDbBtn = $("#clearDbBtn");
+
+      // Image manager (admin) UI
+      const imageUrlsInput = $("#imageUrlsInput");
+      const addUrlsBtn = $("#addUrlsBtn");
+      const imgMgr = $("#imgMgr");
+      const imgBrowseBtn = $("#imgBrowseBtn");
+      const imgFileInput = $("#imgFileInput");
+      const imgClearBtn = $("#imgClearBtn");
+      const imgPreviewGrid = $("#imgPreviewGrid");
+
+      // Product modal UI
+      const pModal = $("#productModal");
+      const pClose = $("#pClose");
+      const pEdit = $("#pEdit");
+      const pClose2 = $("#pClose2");
+      const pName = $("#pName");
+      const pMeta = $("#pMeta");
+      const pPrice = $("#pPrice");
+      const pCategory = $("#pCategory");
+      const pDesc = $("#pDesc");
+      const pThumbs = $("#pThumbs");
+      const pMainWrap = $("#pMainWrap");
+      const pAdd = $("#pAdd");
+
+      // Stats
+      const statTotal = $("#statTotal");
+      const statItem = $("#statItem");
+      const statGuests = $("#statGuests");
+
+      // Keys
+      const KEY_PRODUCTS = "itemkey.manufacture.products.v4";
+      const KEY_CART = "itemkey.manufacture.cart.v4";
+      const KEY_CURRENCY = "itemkey.manufacture.currency.v4";
+      const SEED_URL = "assets/js/item-manufacture.db.json";
+
+      const state = {
+        tab: "home",
+        section: "all",
+        query: "",
+        currency: "BYN",
+        // временные курсы
+        rates: { BYN: 1, USD: 0.31, EUR: 0.29, RUB: 29.0 },
+        products: [],
+        cart: [],
+        openProductId: null,
+        editProductId: null,
+        galleryIndex: 0,
+        draftImages: []
+      };
+
+      function uid(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+      function esc(s){
+        return String(s ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+      function normCat(c){
+        return (c || "").trim().toLowerCase() || "другое";
+      }
+
+      function loadJSON(key, fallback){
+        try{
+          const raw = localStorage.getItem(key);
+          if (!raw) return fallback;
+          return JSON.parse(raw);
+        }catch{ return fallback; }
+      }
+      function saveJSON(key, value){
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+      function persist(){
+        saveJSON(KEY_PRODUCTS, state.products);
+        saveJSON(KEY_CART, state.cart);
+        saveJSON(KEY_CURRENCY, state.currency);
+      }
+
+      function money(amountBYN){
+        const cur = state.currency;
+        const rate = state.rates[cur] ?? 1;
+        const v = (Number(amountBYN) || 0) * rate;
+        const fmt = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: cur==="RUB"?0:2 });
+        return `${fmt.format(v)} ${cur}`;
+      }
+
+      function normalizeProduct(x){
+        const images = Array.isArray(x?.images) ? x.images.map(String).filter(Boolean) : [];
+        const legacy = String(x?.image || "").trim();
+        const finalImages = images.length ? images : (legacy ? [legacy] : []);
+        return {
+          id: String(x?.id || uid()),
+          owner: (x?.owner === "guests") ? "guests" : "item",
+          category: String(x?.category || "другое"),
+          name: String(x?.name || "Untitled"),
+          priceBYN: Number(x?.priceBYN || 0),
+          images: finalImages,
+          // keep legacy too (optional)
+          image: finalImages[0] || "",
+          desc: String(x?.desc || ""),
+          createdAt: Number(x?.createdAt || Date.now())
+        };
+      }
+
+      async function loadProducts(){
+        const existing = loadJSON(KEY_PRODUCTS, null);
+        if (Array.isArray(existing)) return existing.map(normalizeProduct);
+
+        try{
+          const res = await fetch(SEED_URL, { cache: "no-store" });
+          if (!res.ok) throw new Error("seed not found");
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const normalized = data.map(normalizeProduct);
+            saveJSON(KEY_PRODUCTS, normalized);
+            return normalized;
+          }
+        }catch{
+          // ignore
+        }
+        return [];
+      }
+
+      function setTab(tab){
+        state.tab = tab;
+        state.section = "all";
+        state.query = state.query || "";
+        closeProductModal();
+
+        tabButtons.forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"));
+
+        const isHome = (tab === "home");
+        if (homePanel) homePanel.style.display = isHome ? "block" : "none";
+        if (chipWrap) {
+          chipWrap.style.display = isHome ? "none" : "flex";
+          chipWrap.dataset.hidden = isHome ? "true" : "false";
+        }
+        if (toolbar) toolbar.style.display = isHome ? "none" : "flex";
+        if (scopePill) scopePill.textContent = `scope: ${tab}`;
+        if (ownerHidden) ownerHidden.value = tab;
+
+        chipButtons.forEach(c => c.dataset.active = (c.dataset.cat === "all") ? "true" : "false");
+
+        // subtle transitions on tab switch
+        if (isHome) {
+          kickAnim(homePanel, "home--anim");
+        } else {
+          kickAnim(chipWrap, "chips--anim");
+          kickAnim(toolbar, "market--anim");
+        }
+
+        render();
+      }
+
+      function setSection(cat){
+        state.section = cat;
+        closeProductModal();
+        chipButtons.forEach(c => c.dataset.active = (c.dataset.cat === cat) ? "true" : "false");
+        kickAnim(chipWrap, "chips--anim");
+        render();
+      }
+
+      function filtered(){
+        const q = state.query.trim().toLowerCase();
+        return state.products
+          .filter(p => state.tab === "home" ? false : (p.owner === state.tab))
+          .filter(p => state.section === "all" ? true : normCat(p.category) === normCat(state.section))
+          .filter(p => {
+            if (!q) return true;
+            const hay = `${p.name} ${p.desc} ${p.category}`.toLowerCase();
+            return hay.includes(q);
+          });
+      }
+
+      function renderStats(){
+        if (!statTotal) return;
+        const total = state.products.length;
+        const item = state.products.filter(p => p.owner === "item").length;
+        const guests = state.products.filter(p => p.owner === "guests").length;
+        statTotal.textContent = String(total);
+        statItem.textContent = String(item);
+        statGuests.textContent = String(guests);
+      }
+
+function kickAnim(el, cls){
+  if (!el) return;
+  el.classList.remove(cls);
+  // force reflow to restart CSS animation
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+function animateGrid(){
+  kickAnim(grid, "grid--anim");
+}
+
+function pulseCart(){
+  kickAnim(cart, "cart--pulse");
+}
+
+
+      function cardHTML(p){
+        const first = (p.images && p.images[0]) ? p.images[0] : "";
+        const img = first
+          ? `<img src="${esc(first)}" alt="${esc(p.name)}">`
+          : `<div class="placeholder">image</div>`;
+
+        return `
+          <article class="card card--shop" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.name)}">
+            <div class="card__media">${img}</div>
+            <div class="card__body">
+              <div class="card__top">
+                <h3 class="card__name">${esc(p.name)}</h3>
+                <div class="card__price">${money(p.priceBYN)}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderGrid(){
+        if (!grid) return;
+        if (state.tab === "home"){
+          grid.innerHTML = "";
+          animateGrid();
+          return;
+        }
+
+        const list = filtered();
+        if (!list.length){
+          grid.innerHTML = `
+            <div class="empty">
+              <b>пока пусто</b>
+              нажми <u>add clothing</u> и создай первую карточку.
+            </div>
+          `;
+          animateGrid();
+          return;
+        }
+
+        grid.innerHTML = list.map(cardHTML).join("");
+        animateGrid();
+      }
+
+      // Cart
+      function openCart(on, opts = {}){
+  if (!cart) return;
+  cart.dataset.open = on ? "true" : "false";
+  if (on && opts.pulse !== false) pulseCart();
+}
+      function cartQty(){
+        return state.cart.reduce((s, x) => s + x.qty, 0);
+      }
+      function renderCart(){
+        if (!cartCount || !cartList || !cartTotal) return;
+        cartCount.textContent = String(cartQty());
+
+        if (!state.cart.length){
+          cartList.innerHTML = `<div class="helper">Корзина пуста.</div>`;
+          cartTotal.textContent = money(0);
+          return;
+        }
+
+        cartList.innerHTML = state.cart.map(it => {
+          const p = state.products.find(x => x.id === it.id);
+          if (!p) return "";
+          return `
+            <div class="cart-item" data-id="${esc(it.id)}">
+              <div>
+                <div class="cart-item__name">${esc(p.name)}</div>
+                <div class="cart-item__meta">${money(p.priceBYN)} · ${esc(p.category || "—")}</div>
+              </div>
+              <div class="cart-item__qty">
+                <button class="qtybtn" data-q="dec" type="button">−</button>
+                <div>${it.qty}</div>
+                <button class="qtybtn" data-q="inc" type="button">+</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const totalBYN = state.cart.reduce((sum, it) => {
+          const p = state.products.find(x => x.id === it.id);
+          return sum + (p ? p.priceBYN * it.qty : 0);
+        }, 0);
+
+        cartTotal.textContent = money(totalBYN);
+      }
+
+      function addToCart(id){
+        const it = state.cart.find(x => x.id === id);
+        if (it) it.qty += 1;
+        else state.cart.push({ id, qty: 1 });
+        persist();
+        renderCart();
+      }
+
+      function adjustQty(id, delta){
+        const it = state.cart.find(x => x.id === id);
+        if (!it) return;
+        it.qty += delta;
+        if (it.qty <= 0) state.cart = state.cart.filter(x => x.id !== id);
+        persist();
+        renderCart();
+      }
+
+      // Admin modal
+      function openAdminModal(on){
+        if (!modal) return;
+        modal.dataset.open = on ? "true" : "false";
+        modal.setAttribute("aria-hidden", on ? "false" : "true");
+      }
+
+      function setAdminMode(mode, product){
+        const titleEl = $("#clothModalTitle");
+        if (titleEl){
+          titleEl.textContent = (mode === "edit") ? "edit clothing" : "add clothing";
+        }
+        if (mode !== "edit"){
+          state.editProductId = null;
+        } else if (product?.id){
+          state.editProductId = product.id;
+        }
+      }
+
+      function setSelectValue(selectEl, value, fallback){
+        if (!selectEl) return;
+        const v = String(value ?? "").trim();
+        const has = Array.from(selectEl.options || []).some(o => o.value === v);
+        selectEl.value = has ? v : (fallback ?? selectEl.value);
+      }
+
+      function openEditorForProduct(id){
+        const p = state.products.find(x => x.id === id);
+        if (!p) return;
+
+        // switch to editor mode
+        setAdminMode("edit", p);
+
+        // fill form with existing values
+        try { form?.reset(); } catch {}
+        if (ownerHidden) ownerHidden.value = p.owner;
+
+        const catSel = form?.querySelector('[name="category"]');
+        const priceIn = form?.querySelector('[name="price"]');
+        const nameIn = form?.querySelector('[name="name"]');
+        const descIn = form?.querySelector('[name="desc"]');
+
+        // Image manager
+        if (imageUrlsInput) imageUrlsInput.value = "";
+        setDraftImages(Array.isArray(p.images) ? p.images : []);
+
+        setSelectValue(catSel, p.category, "другое");
+        if (priceIn) priceIn.value = String(p.priceBYN ?? "");
+        if (nameIn) nameIn.value = String(p.name ?? "");
+        if (descIn) descIn.value = String(p.desc ?? "");
+
+        openAdminModal(true);
+      }
+
+      function resetAdminModal(){
+        setAdminMode("create");
+        try { form?.reset(); } catch {}
+        if (ownerHidden) ownerHidden.value = state.tab;
+        if (imageUrlsInput) imageUrlsInput.value = "";
+        setDraftImages([]);
+      }
+
+      function readFileAsDataURL(file){
+        return new Promise((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = reject;
+          fr.readAsDataURL(file);
+        });
+      }
+
+
+      // ===== Image manager (admin) =====
+      const IMG_LIMIT = 12;
+
+      function uniqImages(arr){
+        const out = [];
+        const seen = new Set();
+        for (const raw of (arr || [])){
+          const s = String(raw || "").trim();
+          if (!s) continue;
+          if (seen.has(s)) continue;
+          seen.add(s);
+          out.push(s);
+          if (out.length >= IMG_LIMIT) break;
+        }
+        return out;
+      }
+
+      function setDraftImages(images){
+        state.draftImages = uniqImages(images);
+        renderDraftImages();
+      }
+
+      function renderDraftImages(){
+        if (!imgPreviewGrid) return;
+        const imgs = state.draftImages || [];
+        if (!imgs.length){
+          imgPreviewGrid.innerHTML = `<div class="imgmgr__empty">no images</div>`;
+          return;
+        }
+        imgPreviewGrid.innerHTML = imgs.map((src, i) => `
+          <div class="imgtile" data-i="${i}" tabindex="0" role="button" aria-label="image ${i+1}">
+            <img src="${esc(src)}" alt="image ${i+1}">
+            ${i === 0 ? `<div class="imgtile__badge">cover</div>` : ``}
+            <button class="imgtile__remove" type="button" data-remove="${i}" aria-label="remove">×</button>
+          </div>
+        `).join("");
+      }
+
+      function addUrlsToDraft(raw){
+        const urls = String(raw || "")
+          .split(/[,\n]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        if (!urls.length) return;
+        setDraftImages([...(state.draftImages || []), ...urls]);
+      }
+
+      async function addFilesToDraft(fileList){
+        const files = Array.from(fileList || []).filter(Boolean);
+        if (!files.length) return;
+
+        const imgs = [...(state.draftImages || [])];
+        for (const f of files){
+          if (imgs.length >= IMG_LIMIT) break;
+          try{ imgs.push(await readFileAsDataURL(f)); }catch{}
+        }
+        setDraftImages(imgs);
+      }
+
+      function removeDraftImage(i){
+        const imgs = [...(state.draftImages || [])];
+        imgs.splice(i, 1);
+        setDraftImages(imgs);
+      }
+
+      function makeCover(i){
+        const imgs = [...(state.draftImages || [])];
+        if (i <= 0 || i >= imgs.length) return;
+        const [x] = imgs.splice(i, 1);
+        imgs.unshift(x);
+        setDraftImages(imgs);
+      }
+
+      async function onPublish(e){
+        e.preventDefault();
+
+        const fd = new FormData(form);
+        const owner = String(fd.get("owner") || state.tab || "item");
+        const category = String(fd.get("category") || "другое").trim() || "другое";
+        const name = String(fd.get("name") || "").trim();
+        const desc = String(fd.get("desc") || "").trim();
+        const priceBYN = Number(String(fd.get("price") || "0").replace(",", "."));
+
+        if (!name || !Number.isFinite(priceBYN) || priceBYN <= 0){
+          alert("Заполни название и цену (числом).");
+          return;
+        }
+
+        // urls (comma/newline separated) — if user typed urls and didn't press "add urls", we still take them
+        const urlsRaw = String(fd.get("imageUrls") || "");
+        const urlImages = urlsRaw
+          ? urlsRaw.split(/[,\n]+/).map(s => s.trim()).filter(Boolean)
+          : [];
+
+        // final images = (files added via manager) + urls
+        const images = uniqImages([...(state.draftImages || []), ...urlImages]); // capped in uniqImages
+
+        // safety cap
+
+        const isEdit = !!state.editProductId;
+        if (isEdit){
+          const idx = state.products.findIndex(x => x.id === state.editProductId);
+          const prev = idx >= 0 ? state.products[idx] : null;
+
+          // In edit mode we take the current image manager state as the source of truth (can be empty if user удалил всё)
+          const finalImages = images;
+          const updated = normalizeProduct({
+            id: prev?.id || state.editProductId,
+            owner: owner === "guests" ? "guests" : "item",
+            category,
+            name,
+            priceBYN,
+            images: finalImages,
+            image: finalImages[0] || "",
+            desc,
+            createdAt: prev?.createdAt || Date.now()
+          });
+
+          if (idx >= 0) state.products[idx] = updated;
+          else state.products.unshift(updated);
+
+          persist();
+
+          form.reset();
+          if (imageUrlsInput) imageUrlsInput.value = "";
+          setDraftImages([]);
+          state.editProductId = null;
+          if (ownerHidden) ownerHidden.value = state.tab;
+          openAdminModal(false);
+
+          render();
+          openProductModal(updated.id);
+          return;
+        }
+
+        const product = normalizeProduct({
+          id: uid(),
+          owner: owner === "guests" ? "guests" : "item",
+          category,
+          name,
+          priceBYN,
+          images,
+          image: images[0] || "",
+          desc,
+          createdAt: Date.now()
+        });
+
+        state.products.unshift(product);
+        persist();
+
+        form.reset();
+        if (imageUrlsInput) imageUrlsInput.value = "";
+        setDraftImages([]);
+        if (ownerHidden) ownerHidden.value = state.tab;
+        openAdminModal(false);
+
+        render();
+        openProductModal(product.id);
+      }
+
+      async function saveDbToFile(){
+        const json = JSON.stringify(state.products, null, 2);
+
+        try{
+          if (window.showSaveFilePicker){
+            const handle = await window.showSaveFilePicker({
+              suggestedName: "item-manufacture.db.json",
+              types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(json);
+            await writable.close();
+            alert("DB сохранена в файл.");
+            return;
+          }
+        }catch{
+          // fallback below
+        }
+
+        const blob = new Blob([json], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "item-manufacture.db.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        alert("DB скачана. Положи файл в assets/js/ и замени старый.");
+      }
+
+      function exportDb(){
+        const blob = new Blob([JSON.stringify(state.products, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "item-manufacture.db.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      async function importDb(file){
+        const txt = await file.text();
+        const data = JSON.parse(txt);
+        if (!Array.isArray(data)) throw new Error("bad db");
+        state.products = data.map(normalizeProduct);
+        closeProductModal();
+        persist();
+        render();
+        alert("DB импортирована.");
+      }
+
+      function clearAll(){
+        if (!confirm("Очистить все карточки?")) return;
+        state.products = [];
+        state.cart = [];
+        closeProductModal();
+        persist();
+        render();
+        renderCart();
+      }
+
+      function render(){
+        renderGrid();
+        renderCart();
+        renderStats();
+        if (currencySelect) currencySelect.value = state.currency;
+      }
+
+      // ===== Product modal (details) =====
+      function openProductModal(id){
+        const p = state.products.find(x => x.id === id);
+        if (!p || !pModal) return;
+
+        state.openProductId = id;
+        state.galleryIndex = 0;
+
+        pName.textContent = p.name || "product";
+        pMeta.textContent = `${p.owner} · ${p.category || "—"}`;
+        pPrice.textContent = money(p.priceBYN);
+        pCategory.textContent = p.category || "—";
+        pDesc.textContent = p.desc || "";
+
+        if (pAdd){
+          pAdd.disabled = false;
+          pAdd.dataset.busy = "false";
+          pAdd.classList.remove("btn--added");
+          pAdd.textContent = "add to cart";
+        }
+
+        // thumbs + main
+        const imgs = (p.images && p.images.length) ? p.images : [];
+        pThumbs.innerHTML = imgs.map((src, i) => `
+          <button class="thumb" type="button" data-i="${i}" data-active="${i===0 ? "true" : "false"}" aria-label="image ${i+1}">
+            <img src="${esc(src)}" alt="${esc(p.name)} ${i+1}">
+          </button>
+        `).join("");
+
+        setMainImage(0);
+
+        pModal.dataset.open = "true";
+        pModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-lock");
+      }
+
+      function closeProductModal(){
+        if (!pModal) return;
+        state.openProductId = null;
+        state.galleryIndex = 0;
+        pModal.dataset.open = "false";
+        pModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-lock");
+      }
+
+      function setMainImage(i){
+        const p = state.products.find(x => x.id === state.openProductId);
+        if (!p) return;
+
+        const imgs = (p.images && p.images.length) ? p.images : [];
+        const idx = Math.max(0, Math.min(i, Math.max(0, imgs.length - 1)));
+        state.galleryIndex = idx;
+
+        if (!imgs.length){
+          pMainWrap.innerHTML = `<div class="placeholder">image</div>`;
+          pThumbs.innerHTML = "";
+          return;
+        }
+
+        pMainWrap.innerHTML = `<img src="${esc(imgs[idx])}" alt="${esc(p.name)}">`;
+        $$(".thumb", pThumbs).forEach(t => t.dataset.active = (Number(t.dataset.i) === idx) ? "true" : "false");
+      }
+
+      // ===== Events wiring =====
+      tabButtons.forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+      chipButtons.forEach(c => c.addEventListener("click", () => setSection(c.dataset.cat)));
+
+      searchInput?.addEventListener("input", (e) => {
+        state.query = e.target.value || "";
+        closeProductModal();
+        render();
+      });
+
+      currencySelect?.addEventListener("change", (e) => {
+        state.currency = e.target.value;
+        persist();
+        render();
+      });
+
+      cartOpen?.addEventListener("click", () => openCart(true, { pulse: true }));
+      cartClose?.addEventListener("click", () => openCart(false));
+
+      cart?.addEventListener("click", (e) => {
+        const btn = e.target.closest(".qtybtn");
+        if (!btn) return;
+        const row = e.target.closest(".cart-item");
+        if (!row) return;
+        adjustQty(row.dataset.id, btn.dataset.q === "inc" ? 1 : -1);
+      });
+
+      // Card click -> open modal
+      function tryOpenFromEvent(e){
+        const card = e.target.closest(".card.card--shop");
+        if (!card) return;
+        const id = card.dataset.id;
+        openProductModal(id);
+      }
+      grid?.addEventListener("click", tryOpenFromEvent);
+
+      // keyboard open on Enter/Space
+      grid?.addEventListener("keydown", (e) => {
+        const card = e.target.closest(".card.card--shop");
+        if (!card) return;
+        if (e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          openProductModal(card.dataset.id);
+        }
+      });
+
+      // product modal events
+      pClose?.addEventListener("click", closeProductModal);
+      pEdit?.addEventListener("click", () => {
+        const id = state.openProductId;
+        if (!id) return;
+        closeProductModal();
+        openEditorForProduct(id);
+      });
+      pClose2?.addEventListener("click", closeProductModal);
+      pModal?.addEventListener("click", (e) => { if (e.target === pModal) closeProductModal(); });
+
+      pThumbs?.addEventListener("click", (e) => {
+        const t = e.target.closest(".thumb");
+        if (!t) return;
+        setMainImage(Number(t.dataset.i));
+      });
+
+      pAdd?.addEventListener("click", () => {
+  const id = state.openProductId;
+  if (!id) return;
+
+  if (pAdd.dataset.busy === "true") return;
+  pAdd.dataset.busy = "true";
+
+  // confirm click (subtle)
+  pAdd.classList.add("btn--added");
+  pAdd.textContent = "added ✓";
+  pAdd.disabled = true;
+
+  addToCart(id);
+
+  // close product modal, then open cart panel
+  closeProductModal();
+  setTimeout(() => openCart(true, { pulse: true }), 160);
+
+  // reset button for the next open (openProductModal also resets)
+  setTimeout(() => {
+    pAdd.disabled = false;
+    pAdd.dataset.busy = "false";
+    pAdd.classList.remove("btn--added");
+    pAdd.textContent = "add to cart";
+  }, 650);
+});
+
+      // Escape + arrows for gallery
+      document.addEventListener("keydown", (e) => {
+        if (pModal?.dataset.open !== "true") return;
+        if (e.key === "Escape") closeProductModal();
+        if (e.key === "ArrowLeft") setMainImage(state.galleryIndex - 1);
+        if (e.key === "ArrowRight") setMainImage(state.galleryIndex + 1);
+      });
+
+      // admin modal
+            addClothBtn?.addEventListener("click", () => {
+        if (state.tab === "home") return;
+        resetAdminModal();
+        if (ownerHidden) ownerHidden.value = state.tab;
+        openAdminModal(true);
+      });
+
+      saveDbBtn?.addEventListener("click", saveDbToFile);
+
+      modalClose?.addEventListener("click", () => { openAdminModal(false); resetAdminModal(); });
+      modal?.addEventListener("click", (e) => { if (e.target === modal) { openAdminModal(false); resetAdminModal(); } });
+
+      form?.addEventListener("submit", onPublish);
+
+      // image manager events
+      imgBrowseBtn?.addEventListener("click", () => imgFileInput?.click());
+
+      imgFileInput?.addEventListener("change", async (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        await addFilesToDraft(files);
+        // allow selecting the same file again later
+        e.target.value = "";
+      });
+
+      imgClearBtn?.addEventListener("click", () => setDraftImages([]));
+
+      addUrlsBtn?.addEventListener("click", () => {
+        addUrlsToDraft(imageUrlsInput?.value || "");
+        if (imageUrlsInput) imageUrlsInput.value = "";
+      });
+
+      imgPreviewGrid?.addEventListener("click", (e) => {
+        const rem = e.target.closest(".imgtile__remove");
+        if (rem){
+          removeDraftImage(Number(rem.dataset.remove));
+          return;
+        }
+        const tile = e.target.closest(".imgtile");
+        if (!tile) return;
+        makeCover(Number(tile.dataset.i));
+      });
+
+      imgPreviewGrid?.addEventListener("keydown", (e) => {
+        const tile = e.target.closest(".imgtile");
+        if (!tile) return;
+        if (e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          makeCover(Number(tile.dataset.i));
+        }
+      });
+
+      exportDbBtn?.addEventListener("click", exportDb);
+      importDbInput?.addEventListener("change", async (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        try{ await importDb(f); }catch{ alert("Ошибка импорта."); }
+        importDbInput.value = "";
+      });
+      clearDbBtn?.addEventListener("click", clearAll);
+
+      goItem?.addEventListener("click", () => setTab("item"));
+      goGuests?.addEventListener("click", () => setTab("guests"));
+
+      // ===== init =====
+      state.cart = loadJSON(KEY_CART, []);
+      state.currency = loadJSON(KEY_CURRENCY, "BYN") || "BYN";
+
+      (async () => {
+        state.products = await loadProducts();
+        setTab("home");
+      })();
+    })();
+
+    /* =========================
+      ITEM-USER HEADER LABEL
+      показывает @login когда пользователь вошёл
+      ========================= */
+    (() => {
+      const CURRENT_KEY = "itemkey.currentUser";
+      let current = null;
+      try { current = JSON.parse(localStorage.getItem(CURRENT_KEY) || "null"); } catch { current = null; }
+
+      const userLink = document.querySelector('a.toplink[href="item-user.html"]');
+      if (!userLink) return;
+
+      const tag = userLink.querySelector(".tag");
+      if (!tag) return;
+
+      if (current && current.name) {
+        tag.textContent = `item-user · @${current.name}`;
+        userLink.setAttribute("aria-label", `Item User ${current.name}`);
+      } else {
+        tag.textContent = "item-user";
+        userLink.setAttribute("aria-label", "Item User");
+      }
+    })();
+  </script>
 </body>
 </html>
