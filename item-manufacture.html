@@ -446,6 +446,102 @@
   text-transform: uppercase;
 }
 
+
+/* ===== UI Confirm modal (site-styled, replaces browser confirm) ===== */
+.uimodal{
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2.2vw, 22px);
+  background: rgba(255,255,255,.70);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .22s ease, visibility 0s linear .22s;
+}
+.uimodal[data-open="true"]{
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity .22s ease;
+}
+.uimodal__card{
+  width: min(560px, 94vw);
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.95);
+  overflow: hidden;
+  transform: translateY(10px) scale(.985);
+  opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
+  will-change: transform, opacity;
+}
+.uimodal[data-open="true"] .uimodal__card{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.uimodal__head{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.uimodal__head h3{
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.uimodal__text{
+  margin: 0;
+  padding: 14px;
+  font-size: 12px;
+  color: rgba(0,0,0,.72);
+  line-height: 1.45;
+}
+.uimodal__actions{
+  display:flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  flex-wrap: wrap;
+}
+
+/* Toast (quiet, gothic) */
+.uitoast{
+  position: fixed;
+  left: 50%;
+  bottom: clamp(14px, 3.2vh, 26px);
+  transform: translateX(-50%);
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+.uitoast__msg{
+  pointer-events: none;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.92);
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: rgba(0,0,0,.78);
+  opacity: 0;
+  transform: translateY(8px);
+  filter: blur(1px);
+  transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+}
+.uitoast__msg[data-show="true"]{
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
 </style>
 </head>
 
@@ -690,7 +786,7 @@
             import json
             <input id="importDbInput" type="file" accept="application/json" style="display:none;" />
           </label>
-          <button id="clearDbBtn" class="btn btn--ghost" type="button">clear</button>
+          <button id="deleteCardBtn" class="btn btn--ghost" type="button" disabled>delete</button>
         </div>
       </form>
     </div>
@@ -737,6 +833,25 @@
       </div>
     </div>
   </div>
+
+
+  <!-- UI CONFIRM MODAL (site-styled) -->
+  <div class="uimodal" id="uiConfirm" data-open="false" aria-hidden="true">
+    <div class="uimodal__card" role="dialog" aria-modal="true" aria-label="Confirm">
+      <div class="uimodal__head">
+        <h3 id="uiConfirmTitle">confirm</h3>
+        <button id="uiConfirmClose" class="btn" type="button">close</button>
+      </div>
+      <p class="uimodal__text" id="uiConfirmText"></p>
+      <div class="uimodal__actions">
+        <button id="uiConfirmCancel" class="btn" type="button">cancel</button>
+        <button id="uiConfirmOk" class="btn btn--primary" type="button">ok</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI TOAST -->
+  <div class="uitoast" id="uiToast" aria-live="polite" aria-atomic="true"></div>
 
   <script>
     // Active page highlight (simple)
@@ -793,7 +908,7 @@
       const ownerHidden = $("#clothOwner");
       const exportDbBtn = $("#exportDbBtn");
       const importDbInput = $("#importDbInput");
-      const clearDbBtn = $("#clearDbBtn");
+      const deleteCardBtn = $("#deleteCardBtn");
 
       // Image manager (admin) UI
       const imageUrlsInput = $("#imageUrlsInput");
@@ -843,6 +958,100 @@
         galleryIndex: 0,
         draftImages: []
       };
+
+      // ===== Site-styled confirm + toast (replaces browser alert/confirm for delete) =====
+      const uiConfirmEl = $("#uiConfirm");
+      const uiConfirmTitle = $("#uiConfirmTitle");
+      const uiConfirmText = $("#uiConfirmText");
+      const uiConfirmOk = $("#uiConfirmOk");
+      const uiConfirmCancel = $("#uiConfirmCancel");
+      const uiConfirmClose = $("#uiConfirmClose");
+      const uiConfirmActions = uiConfirmEl?.querySelector(".uimodal__actions");
+      const uiToastEl = $("#uiToast");
+
+      let _uiConfirmResolver = null;
+
+      function uiToast(msg, ttl = 1600){
+        if (!uiToastEl) return;
+        const node = document.createElement("div");
+        node.className = "uitoast__msg";
+        node.textContent = String(msg || "");
+        uiToastEl.appendChild(node);
+
+        // show
+        requestAnimationFrame(() => node.dataset.show = "true");
+
+        // hide + remove
+        setTimeout(() => {
+          node.dataset.show = "false";
+          setTimeout(() => node.remove(), 260);
+        }, Math.max(600, ttl));
+      }
+
+      function closeUiConfirm(result){
+        if (!uiConfirmEl) return;
+        uiConfirmEl.dataset.open = "false";
+        uiConfirmEl.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-lock");
+        const r = _uiConfirmResolver;
+        _uiConfirmResolver = null;
+        if (typeof r === "function") r(!!result);
+      }
+
+      function uiConfirm({ title = "confirm", text = "", okText = "ok", cancelText = "cancel" } = {}){
+        return new Promise((resolve) => {
+          if (!uiConfirmEl){
+            // fallback (shouldn't happen)
+            resolve(false);
+            return;
+          }
+
+          _uiConfirmResolver = resolve;
+
+          if (uiConfirmTitle) uiConfirmTitle.textContent = String(title || "confirm");
+          if (uiConfirmText) uiConfirmText.textContent = String(text || "");
+          const _ok = (okText === undefined) ? "ok" : String(okText);
+          const _cancel = (cancelText === undefined) ? "cancel" : String(cancelText);
+          if (uiConfirmOk) uiConfirmOk.textContent = _ok;
+          if (uiConfirmCancel) uiConfirmCancel.textContent = _cancel;
+          const single = (_cancel === "" || cancelText === null);
+          if (uiConfirmCancel) uiConfirmCancel.style.display = single ? "none" : "";
+          if (uiConfirmActions) uiConfirmActions.style.justifyContent = single ? "flex-end" : "";
+
+          uiConfirmEl.dataset.open = "true";
+          uiConfirmEl.setAttribute("aria-hidden", "false");
+          document.body.classList.add("modal-lock");
+
+          // focus
+          setTimeout(() => uiConfirmCancel?.focus?.(), 0);
+        });
+      }
+
+      // confirm modal events (once)
+      (() => {
+        if (!uiConfirmEl) return;
+
+        uiConfirmOk?.addEventListener("click", () => closeUiConfirm(true));
+        uiConfirmCancel?.addEventListener("click", () => closeUiConfirm(false));
+        uiConfirmClose?.addEventListener("click", () => closeUiConfirm(false));
+
+        uiConfirmEl.addEventListener("click", (e) => {
+          if (e.target === uiConfirmEl) closeUiConfirm(false);
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (uiConfirmEl.dataset.open !== "true") return;
+          if (e.key === "Escape") closeUiConfirm(false);
+        });
+      })();
+
+
+      // UI Alert (site-styled) — replaces browser alert()
+      function uiAlert({ title = "notice", text = "", okText = "ok" } = {}){
+        // Uses the same modal, but with a single action button
+        return uiConfirm({ title, text, okText, cancelText: "" }).then(() => {});
+      }
+
 
       function uid(){
         return Math.random().toString(16).slice(2) + Date.now().toString(16);
@@ -1119,15 +1328,19 @@ function pulseCart(){
       }
 
       function setAdminMode(mode, product){
-        const titleEl = $("#clothModalTitle");
-        if (titleEl){
-          titleEl.textContent = (mode === "edit") ? "edit clothing" : "add clothing";
-        }
+        // IMPORTANT: set editProductId FIRST, then update UI (delete button state depends on it)
         if (mode !== "edit"){
           state.editProductId = null;
         } else if (product?.id){
           state.editProductId = product.id;
         }
+
+        const titleEl = $("#clothModalTitle");
+        if (titleEl){
+          titleEl.textContent = (mode === "edit") ? "edit clothing" : "add clothing";
+        }
+
+        updateDeleteButton();
       }
 
       function setSelectValue(selectEl, value, fallback){
@@ -1171,6 +1384,8 @@ function pulseCart(){
         if (ownerHidden) ownerHidden.value = state.tab;
         if (imageUrlsInput) imageUrlsInput.value = "";
         setDraftImages([]);
+        
+        updateDeleteButton();
       }
 
       function readFileAsDataURL(file){
@@ -1267,7 +1482,7 @@ function pulseCart(){
         const priceBYN = Number(String(fd.get("price") || "0").replace(",", "."));
 
         if (!name || !Number.isFinite(priceBYN) || priceBYN <= 0){
-          alert("Заполни название и цену (числом).");
+          await uiAlert({ title: "Проверь данные", text: "Заполни название и цену (числом).", okText: "ok" });
           return;
         }
 
@@ -1355,7 +1570,7 @@ function pulseCart(){
             const writable = await handle.createWritable();
             await writable.write(json);
             await writable.close();
-            alert("DB сохранена в файл.");
+            uiToast("DB сохранена в файл.");
             return;
           }
         }catch{
@@ -1368,7 +1583,7 @@ function pulseCart(){
         a.download = "item-manufacture.db.json";
         a.click();
         URL.revokeObjectURL(a.href);
-        alert("DB скачана. Положи файл в assets/js/ и замени старый.");
+        uiAlert({ title: "Готово", text: "DB скачана. Положи файл в assets/js/ и замени старый.", okText: "ok" });
       }
 
       function exportDb(){
@@ -1388,18 +1603,36 @@ function pulseCart(){
         closeProductModal();
         persist();
         render();
-        alert("DB импортирована.");
+        uiToast("DB импортирована.");
       }
 
-      function clearAll(){
-        if (!confirm("Очистить все карточки?")) return;
-        state.products = [];
-        state.cart = [];
-        closeProductModal();
+      function deleteProductById(id){
+        if (!id) return false;
+
+        // remove from products
+        const before = state.products.length;
+        state.products = state.products.filter(p => p.id !== id);
+
+        // remove from cart too (so totals/count don't break)
+        state.cart = state.cart.filter(it => it.id !== id);
+
+        // close product modal if it was open for this product
+        if (state.openProductId === id) closeProductModal();
+
         persist();
         render();
         renderCart();
+        return state.products.length !== before;
       }
+
+      function updateDeleteButton(){
+        if (!deleteCardBtn) return;
+        const isEdit = !!state.editProductId;
+        deleteCardBtn.disabled = !isEdit;
+        deleteCardBtn.textContent = isEdit ? "delete" : "delete";
+        deleteCardBtn.title = isEdit ? "Удалить эту карточку" : "Удаление доступно только в режиме редактирования";
+      }
+
 
       function render(){
         renderGrid();
@@ -1625,10 +1858,32 @@ function pulseCart(){
       importDbInput?.addEventListener("change", async (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
-        try{ await importDb(f); }catch{ alert("Ошибка импорта."); }
+        try{ await importDb(f); }catch{ await uiAlert({ title: "Ошибка", text: "Ошибка импорта.", okText: "ok" }); }
         importDbInput.value = "";
       });
-      clearDbBtn?.addEventListener("click", clearAll);
+      
+      deleteCardBtn?.addEventListener("click", async () => {
+        if (!state.editProductId) return;
+        const id = state.editProductId;
+        const p = state.products.find(x => x.id === id);
+        const name = p?.name ? `“${p.name}”` : "эту карточку";
+
+        const yes = await uiConfirm({
+          title: "delete",
+          text: `Удалить ${name}? Это действие нельзя отменить.`,
+          okText: "delete",
+          cancelText: "cancel"
+        });
+        if (!yes) return;
+
+        const ok = deleteProductById(id);
+        // close editor either way
+        openAdminModal(false);
+        resetAdminModal();
+
+        if (ok) uiToast("Карточка удалена.");
+      });
+
 
       goItem?.addEventListener("click", () => setTab("item"));
       goGuests?.addEventListener("click", () => setTab("guests"));
