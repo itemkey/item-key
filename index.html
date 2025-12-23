@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Key — Главное меню</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="page page-home">
+
+  <!-- тонкая рамка по краю (дорого выглядит) -->
+  <div class="outer-frame" aria-hidden="true"></div>
+  <div class="rays" aria-hidden="true"></div>
+<div class="veil" aria-hidden="true"></div>
+
+  <!-- верхний “герб” -->
+  <header class="topbar topbar--edge">
+    <a class="toplink" href="item-user.html" aria-label="Item User">
+      <span class="tag">item-user</span>
+    </a>
+  </header>
+
+  <!-- ЛЕВЫЙ РЕЙЛ — прилегает к краю -->
+  <aside class="rail rail--left" aria-label="Левое меню">
+    <a class="rail-link" href="item-manufacture.html">
+      <span class="rail-link__title">item-manufacture</span>
+      <span class="rail-link__meta">создание / производство</span>
+    </a>
+    <a class="rail-link" href="item-crate.html">
+      <span class="rail-link__title">item-crate</span>
+      <span class="rail-link__meta">архив / контейнеры</span>
+    </a>
+  </aside>
+
+  <!-- ПРАВЫЙ РЕЙЛ — прилегает к краю -->
+  <aside class="rail rail--right" aria-label="Правое меню">
+    <a class="rail-link" href="item-security.html">
+      <span class="rail-link__title">item-security</span>
+      <span class="rail-link__meta">доступ / защита</span>
+    </a>
+    <a class="rail-link" href="item-soft.html">
+      <span class="rail-link__title">item-soft</span>
+      <span class="rail-link__meta">инструменты / редакторы</span>
+    </a>
+  </aside>
+
+  <main class="center-stage" aria-label="Центр">
+  <!-- аккуратное “витражное окно” на фоне (не ломает сетку) -->
+  <div class="window" aria-hidden="true">
+    <div class="tracery"></div>
+  </div>
+
+  <section class="hero" aria-label="Главный блок">
+    <div class="hero-text">
+      <div class="hero-title">Item Key</div>
+      <div class="hero-sub">архив человеческого подсознания</div>
+      <div class="hero-meta">CATALOG · ARCHIVE · RESTRICTED ACCESS</div>
+    </div>
+
+    <!-- КЛИКАБЕЛЬНОЕ ЛОГО: ведёт на страницу (поменяй href куда надо) -->
+    <a class="logo-link" href="item-crate.html" aria-label="Открыть модуль (переход)">
+      <div class="logo-anim" aria-label="Item Key logo animation">
+        <canvas id="logoCanvas" width="1200" height="1200"></canvas>
+        <noscript>
+          <img src="assets/img/itemkey_logo.png" alt="Item Key logo" />
+        </noscript>
+      </div>
+      <div class="logo-hint"></div>
+    </a>
+  </section>
+</main>
+
+
+
+  <footer class="bottombar bottombar--edge">
+    <span class="hint">ты уже здесь был.
+ты просто не помнил.</span>
+    <span class="sep">•</span>
+    <span class="hint">pre-alpha</span>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

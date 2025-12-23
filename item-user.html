@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Key — item-user</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="page page-user">
+
+  <div class="outer-frame"></div>
+
+  <header class="topbar topbar--edge">
+    <a class="toplink" href="index.html">
+      <span class="tag">item-key</span>
+    </a>
+  </header>
+
+  <main class="center-stage">
+
+    <!-- ГОСТЬ -->
+    <section id="authGuest" class="auth-box">
+      <h1>item-user</h1>
+      <p class="muted">доступ к архиву</p>
+
+      <div class="auth-tabs">
+        <button data-tab="login" class="auth-tab is-active">вход</button>
+        <button data-tab="register" class="auth-tab">регистрация</button>
+      </div>
+
+      <!-- ВХОД -->
+      <form id="loginForm" class="auth-form">
+        <input required type="text" placeholder="логин или почта" id="loginName">
+        <input required type="password" placeholder="пароль" id="loginPass">
+        <button class="btn btn--primary" type="submit">войти</button>
+      </form>
+
+      <!-- РЕГИСТРАЦИЯ -->
+      <form id="registerForm" class="auth-form hidden">
+        <input required type="text" placeholder="логин" id="regName">
+        <input required type="email" placeholder="почта" id="regEmail">
+        <input required type="password" placeholder="пароль" id="regPass">
+        <button class="btn btn--primary" type="submit">создать аккаунт</button>
+      </form>
+    </section>
+
+    <!-- ПРОФИЛЬ -->
+    <section id="authProfile" class="auth-box hidden">
+      <h1>профиль</h1>
+
+      <div class="profile-line"><b>логин:</b> <span id="pLogin"></span></div>
+      <div class="profile-line"><b>email:</b> <span id="pEmail"></span></div>
+
+      <button id="logoutBtn" class="btn">выйти</button>
+    </section>
+
+  </main>
+
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>

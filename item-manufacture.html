@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item Key — item-manufacture</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="page page-manufacture">
+
+  <div class="outer-frame" aria-hidden="true"></div>
+  <div class="rays" aria-hidden="true"></div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <header class="topbar topbar--edge">
+    <a class="toplink" href="item-user.html" aria-label="Item User">
+      <span class="tag">item-user</span>
+    </a>
+  </header>
+
+  <aside class="rail rail--left" aria-label="Левое меню">
+    <a class="rail-link" href="item-manufacture.html"><span class="rail-link__title">item-manufacture</span></a>
+    <a class="rail-link" href="item-crate.html"><span class="rail-link__title">item-crate</span></a>
+  </aside>
+
+  <aside class="rail rail--right" aria-label="Правое меню">
+    <a class="rail-link" href="item-security.html"><span class="rail-link__title">item-security</span></a>
+    <a class="rail-link" href="item-soft.html"><span class="rail-link__title">item-soft</span></a>
+  </aside>
+
+  <main class="center-stage" aria-label="Marketplace">
+    <section class="shop">
+      <div class="shop-head">
+        <div class="shop-head__inner">
+          <div class="shop-title">
+            <div>
+              <h1>item-manufacture</h1>
+              <div class="sub">marketplace · brand · guests</div>
+            </div>
+
+            <!-- справа сверху: валюта + корзина (manager/admin нет) -->
+            <div class="controls">
+              <select id="currencySelect" class="select" aria-label="Валюта">
+                <option value="BYN" selected>BYN</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="RUB">RUB</option>
+              </select>
+
+              <button id="cartOpen" class="btn btn--primary" type="button">
+                cart (<span id="cartCount">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <div class="shop-tools">
+            <div class="tabs" role="tablist" aria-label="Категории">
+              <button class="tab" type="button" role="tab" data-tab="home" aria-selected="true">дом</button>
+              <button class="tab" type="button" role="tab" data-tab="item" aria-selected="false">item</button>
+              <button class="tab" type="button" role="tab" data-tab="guests" aria-selected="false">guests</button>
+            </div>
+
+            <div class="controls">
+              <input id="shopSearch" class="input" type="search" placeholder="поиск (название / описание / теги)" />
+            </div>
+          </div>
+
+          <!-- ВНИМАНИЕ: подкатегории должны быть НЕ в Дом -->
+          <div id="sectionChips" class="chips" aria-label="Разделы">
+            <button class="chip" type="button" data-cat="all" data-active="true">всё</button>
+            <button class="chip" type="button" data-cat="верх">верх</button>
+            <button class="chip" type="button" data-cat="низ">низ</button>
+            <button class="chip" type="button" data-cat="аксессуары">аксессуары</button>
+            <button class="chip" type="button" data-cat="на голову">на голову</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-body">
+        
+        <!-- HOME -->
+        <section id="homePanel" class="home-panel" aria-label="Дом">
+          <div class="home-panel__grid">
+            <div class="home-panel__left">
+              <div class="home-kicker">DOM</div>
+              <h2 class="home-title">Философия & история бренда</h2>
+              <p class="home-lead">
+                Здесь — вступление. Никаких “верх/низ/аксессуары”.
+                <b>Дом</b> объясняет, что это за бренд и почему он существует.
+              </p>
+
+              <div class="home-cards">
+                <div class="home-card">
+                  <div class="home-card__h">История</div>
+                  <div class="home-card__t">• тезис • тезис • тезис (заменишь текстом)</div>
+                </div>
+                <div class="home-card">
+                  <div class="home-card__h">Философия</div>
+                  <div class="home-card__t">• тезис • тезис • тезис (заменишь текстом)</div>
+                </div>
+                <div class="home-card">
+                  <div class="home-card__h">Материалы</div>
+                  <div class="home-card__t">• ткань / фурнитура / срок жизни • подход к качеству</div>
+                </div>
+                <div class="home-card">
+                  <div class="home-card__h">Дропы</div>
+                  <div class="home-card__t">• каждый выпуск фиксируется как документ архива</div>
+                </div>
+              </div>
+
+              <div class="home-actions">
+                <button class="btn btn--primary" id="goItem" type="button">open item</button>
+                <button class="btn" id="goGuests" type="button">open guests</button>
+              </div>
+
+              <div class="home-note">
+                Карточки по умолчанию пустые. Создавать товары можно в вкладках <b>item</b> и <b>guests</b>.
+              </div>
+            </div>
+
+            <div class="home-panel__right" aria-hidden="true">
+              <div class="seal">
+                <div class="seal__title">ARCHIVE SEAL</div>
+                <div class="seal__sigil"></div>
+                <div class="seal__meta">white · gothic · marketplace</div>
+              </div>
+              <div class="stats">
+                <div class="stat"><div class="stat__n" id="statTotal">0</div><div class="stat__l">listings</div></div>
+                <div class="stat"><div class="stat__n" id="statItem">0</div><div class="stat__l">item</div></div>
+                <div class="stat"><div class="stat__n" id="statGuests">0</div><div class="stat__l">guests</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TOOLBAR visible only for item/guests -->
+        <div id="marketToolbar" class="market-toolbar" style="display:none;">
+          <div class="market-toolbar__left">
+            <div class="market-pill" id="marketScope">scope: item</div>
+          </div>
+          <div class="market-toolbar__right">
+            <button id="addClothBtn" class="btn btn--primary" type="button">add clothing</button>
+            <button id="saveDbBtn" class="btn" type="button">save db</button>
+          </div>
+        </div>
+
+        <!-- GRID -->
+        <div class="grid" id="productGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar bottombar--edge">
+    <span class="hint">manufacture · marketplace</span>
+    <span class="sep">•</span>
+    <span class="hint">pre-alpha</span>
+  </footer>
+
+  <!-- CART -->
+  <aside class="cart" id="cart" data-open="false" aria-label="Корзина">
+    <div class="cart__head">
+      <div class="cart__title">
+        <span>cart</span>
+        <button id="cartClose" class="btn" type="button">close</button>
+      </div>
+    </div>
+    <div class="cart__list" id="cartList"></div>
+    <div class="cart__foot">
+      <div class="total">
+        <span>total</span>
+        <span id="cartTotal">0 BYN</span>
+      </div>
+      <div class="helper" style="margin-top:10px;">
+        Оплата/доставка: позже. Сейчас — витрина, корзина и локальная база.
+      </div>
+    </div>
+  </aside>
+
+  <!-- ADD CLOTHING MODAL -->
+  <div class="modal" id="clothModal" data-open="false" aria-hidden="true">
+    <div class="modal__card" role="dialog" aria-label="Add clothing">
+      <div class="modal__head">
+        <h3 id="clothModalTitle">add clothing</h3>
+        <button id="clothClose" class="btn" type="button">close</button>
+      </div>
+
+      <p class="helper">
+        Сейчас аккаунтов нет — считаем, что все админы. Данные пишутся в локальную базу и сохраняются между перезагрузками.
+        Для “сохранения в файл” используй кнопку <b>save db</b> (создаст/обновит JSON).
+      </p>
+
+      <form id="clothForm" class="form">
+        <input type="hidden" name="owner" id="clothOwner" value="item" />
+
+        <label class="col-6">
+          category
+          <select class="select" name="category">
+            <option value="верх">верх</option>
+            <option value="низ">низ</option>
+            <option value="аксессуары">аксессуары</option>
+            <option value="на голову">на голову</option>
+            <option value="другое">другое</option>
+          </select>
+        </label>
+
+        <label class="col-6">
+          price (BYN)
+          <input class="input" name="price" placeholder="например: 150" />
+        </label>
+
+        <label class="col-12">
+          name
+          <input class="input" name="name" placeholder="например: KEY COAT" />
+        </label>
+
+        <label class="col-12">
+          description
+          <textarea class="input" name="desc" placeholder="детали, материал, посадка, смысл"></textarea>
+        </label>
+
+        <label class="col-6">
+          image url (optional)
+          <input class="input" name="imageUrl" placeholder="https://...">
+        </label>
+
+        <label class="col-6">
+          image file (optional)
+          <input class="input" type="file" name="imageFile" accept="image/*">
+        </label>
+
+        <div class="col-12" style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn--primary" type="submit">publish</button>
+          <button id="exportDbBtn" class="btn" type="button">export json</button>
+          <label class="btn" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+            import json
+            <input id="importDbInput" type="file" accept="application/json" style="display:none;" />
+          </label>
+          <button id="clearDbBtn" class="btn btn--ghost" type="button">clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
