@@ -455,7 +455,7 @@
   <div class="veil" aria-hidden="true"></div>
 
   <header class="topbar topbar--edge">
-    <a class="toplink" href="item-user.html" aria-label="Item User">
+    <a class="toplink" href="item-user.html?returnTo=item-manufacture.html" aria-label="Item User">
       <span class="tag">item-user</span>
     </a>
   </header>
@@ -920,7 +920,9 @@
         return [];
       }
 
-      function setTab(tab){
+      function setTab(tab, opts = {}){
+        // Smart no-op: clicking the active tab again does nothing
+        if (!opts.force && tab === state.tab) return;
         state.tab = tab;
         state.section = "all";
         state.query = state.query || "";
@@ -951,7 +953,9 @@
         render();
       }
 
-      function setSection(cat){
+      function setSection(cat, opts = {}){
+        // Smart no-op: clicking the active section again does nothing
+        if (!opts.force && cat === state.section) return;
         state.section = cat;
         closeProductModal();
         chipButtons.forEach(c => c.dataset.active = (c.dataset.cat === cat) ? "true" : "false");
@@ -1044,6 +1048,10 @@ function pulseCart(){
       // Cart
       function openCart(on, opts = {}){
   if (!cart) return;
+  const cur = cart.dataset.open === "true";
+  // Smart no-op: clicking open/close when already in that state does nothing
+  if (on === cur) return;
+
   cart.dataset.open = on ? "true" : "false";
   if (on && opts.pulse !== false) pulseCart();
 }
@@ -1631,11 +1639,54 @@ function pulseCart(){
 
       (async () => {
         state.products = await loadProducts();
-        setTab("home");
-      })();
+        setTab("home", { force: true });
+})();
     })();
 
-    /* =========================
+/* =========================
+  NAV: remember where item-user was opened from
+  - Writes several keys for compatibility
+  - Also navigates with ?from=<page>&returnTo=<page>
+  ========================= */
+(() => {
+  const from = (location.pathname.split("/").pop() || "index.html");
+
+  const RETURN_KEYS = [
+    "itemkey.user.returnTo",
+    "itemkey.lastPage",
+    "itemkey.returnTo",
+    "itemkey.prevPage",
+    "itemkey.nav.return",
+    "itemkey.user.from"
+  ];
+
+  const setAll = (v) => {
+    try{
+      RETURN_KEYS.forEach(k => localStorage.setItem(k, v));
+      sessionStorage.setItem("itemkey.user.returnTo", v);
+    }catch{}
+  };
+
+  // store on load too (so item-user can read even if user typed URL manually)
+  setAll(from);
+
+  const userLink = document.querySelector('a.toplink[href^="item-user.html"]');
+  if (!userLink) return;
+
+  userLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    setAll(from);
+
+    const url = new URL(userLink.getAttribute("href") || "item-user.html", location.href);
+    url.searchParams.set("from", from);
+    url.searchParams.set("returnTo", from);
+
+    // navigate (keep filename only, like the rest of the site)
+    location.href = url.pathname.split("/").pop() + "?" + url.searchParams.toString() + url.hash;
+  });
+})();
+
+/* =========================
       ITEM-USER HEADER LABEL
       показывает @login когда пользователь вошёл
       ========================= */
@@ -1644,7 +1695,7 @@ function pulseCart(){
       let current = null;
       try { current = JSON.parse(localStorage.getItem(CURRENT_KEY) || "null"); } catch { current = null; }
 
-      const userLink = document.querySelector('a.toplink[href="item-user.html"]');
+      const userLink = document.querySelector('a.toplink[href^="item-user.html"]');
       if (!userLink) return;
 
       const tag = userLink.querySelector(".tag");
