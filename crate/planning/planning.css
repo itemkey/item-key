@@ -1,0 +1,203 @@
+/* Декор — только фон, НЕ перехватывает клики */
+.outer-frame, .rays, .veil { pointer-events: none; }
+
+/* Planning layout */
+.planning-shell{
+  width: min(1180px, 94vw);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.planning-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.planning-title .kicker{
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.55);
+}
+.planning-title h1{
+  margin: 6px 0 0 0;
+  font-size: 14px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.planning-actions{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn:hover{ border-color: rgba(0,0,0,.25); }
+
+.planning-toolbar{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ctl{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  outline: none;
+  min-width: 180px;
+}
+
+.planning-content{ min-height: 55vh; }
+
+.board{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 12px;
+  overflow: auto;
+  padding-bottom: 6px;
+}
+
+@media (max-width: 980px){
+  .board{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+}
+@media (max-width: 620px){
+  .board{ grid-template-columns: 1fr; }
+  .ctl{ min-width: 0; width: 100%; }
+}
+
+.column{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+  min-height: 340px;
+}
+
+.column__head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.column__title{
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.column__count{
+  font-size: 11px;
+  color: rgba(0,0,0,.55);
+}
+
+.column__dropzone{
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 260px;
+}
+
+.card{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.94);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  cursor: grab;
+}
+.card:active{ cursor: grabbing; }
+
+.card__name{
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.card__meta{
+  margin: 0;
+  font-size: 11px;
+  color: rgba(0,0,0,.70);
+  line-height: 1.4;
+}
+
+.schedule{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  padding: 12px;
+}
+
+/* Modal — ВСЕГДА поверх всего сайта */
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 9999 !important;
+}
+.modal__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.25);
+}
+.modal__panel{
+  position: relative;
+  width: min(640px, 92vw);
+  margin: 7vh auto;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.96);
+}
+.modal__head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,0,0,.10);
+}
+.modal__title{
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.modal__body{ padding: 12px; display: grid; gap: 10px; }
+
+.icon-btn{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  width: 34px; height: 34px;
+  cursor: pointer;
+}
+
+/* Toasts */
+.toast-stack{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 10px;
+  z-index: 10000 !important;
+}
+.toast{
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.96);
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
