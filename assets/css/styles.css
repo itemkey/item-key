@@ -1375,4 +1375,31 @@ body.page-home{ overflow: hidden; }
 
 .hidden{ display:none; }
 
+/* ===== CENTER LOGO CIRCLE ===== */
+
+.logo-circle{
+  width: min(420px, 70vw);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.18);
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.85);
+}
+
+.logo-circle img{
+  width: 72%;
+  height: auto;
+  display: block;
+}
+.logo-circle::after{
+  content:"";
+  position:absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.08);
+  pointer-events:none;
+}
+
+
 
