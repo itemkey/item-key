@@ -758,6 +758,7 @@
 
       <form id="clothForm" class="form">
         <input type="hidden" name="owner" id="clothOwner" value="item" />
+        <input type="hidden" name="id" id="clothId" value="" />
 
         <label class="col-6">
           category
@@ -948,6 +949,7 @@
       const modalClose = $("#clothClose");
       const form = $("#clothForm");
       const ownerHidden = $("#clothOwner");
+      const clothIdHidden = $("#clothId");
       const exportDbBtn = $("#exportDbBtn");
       const importDbInput = $("#importDbInput");
       const deleteCardBtn = $("#deleteCardBtn");
@@ -1121,10 +1123,65 @@
       function saveJSON(key, value){
         localStorage.setItem(key, JSON.stringify(value));
       }
+      function isQuotaError(err){
+        return !!(err && (
+          err.name === "QuotaExceededError" ||
+          err.code === 22 ||
+          err.code === 1014 ||
+          /quota/i.test(String(err.message || ""))
+        ));
+      }
+
+      function leanProductsForStorage(list){
+        // localStorage quota is small (~5–10MB). If images are data: URLs, it can overflow fast.
+        // We keep the products, but strip data: URLs so publishing doesn't silently fail.
+        return (Array.isArray(list) ? list : []).map(p => {
+          const imgs = Array.isArray(p?.images) ? p.images.map(String) : [];
+          const filtered = imgs.filter(src => !(src || "").trim().startsWith("data:"));
+          return {
+            ...p,
+            images: filtered,
+            image: filtered[0] || ""
+          };
+        });
+      }
+
+      async function persistWarnQuota(){
+        await uiAlert({
+          title: "Лимит памяти",
+          text: "Похоже, localStorage переполнен (обычно это происходит из‑за загруженных файлов‑картинок). Карточка опубликована, но для сохранения между перезагрузками я сохранил базу без data: изображений. Решение: добавляй картинки URL‑ами или жми save db / export db и храни JSON файлом.",
+          okText: "ok"
+        });
+      }
+
       function persist(){
-        saveJSON(KEY_PRODUCTS, state.products);
-        saveJSON(KEY_CART, state.cart);
-        saveJSON(KEY_CURRENCY, state.currency);
+        // products
+        try{
+          saveJSON(KEY_PRODUCTS, state.products);
+        }catch(err){
+          if (isQuotaError(err)){
+            try{
+              saveJSON(KEY_PRODUCTS, leanProductsForStorage(state.products));
+              // don't block UI thread; show after current call stack
+              setTimeout(() => { persistWarnQuota(); }, 0);
+            }catch(err2){
+              console.error(err2);
+              setTimeout(() => {
+                uiAlert({
+                  title: "Ошибка сохранения",
+                  text: "Карточка опубликована, но база не сохранилась (даже после попытки урезать изображения). Экспортируй DB в файл.",
+                  okText: "ok"
+                });
+              }, 0);
+            }
+          } else {
+            console.error(err);
+          }
+        }
+
+        // cart + currency (small) — best-effort
+        try{ saveJSON(KEY_CART, state.cart); }catch{}
+        try{ saveJSON(KEY_CURRENCY, state.currency); }catch{}
       }
 
       function money(amountBYN){
@@ -1391,20 +1448,27 @@ function pulseCart(){
         if (!modal) return;
         modal.dataset.open = on ? "true" : "false";
         modal.setAttribute("aria-hidden", on ? "false" : "true");
+        // lock page behind (prevents accidental clicks that могли бы менять state во время редактирования)
+        document.body.classList.toggle("modal-lock", !!on);
       }
 
       function setAdminMode(mode, product){
-        // IMPORTANT: set editProductId FIRST, then update UI (delete button state depends on it)
+        // IMPORTANT: modal hidden field `id` is the single source of truth for edit/create
         if (mode !== "edit"){
           state.editProductId = null;
+          if (clothIdHidden) clothIdHidden.value = "";
         } else if (product?.id){
           state.editProductId = product.id;
+          if (clothIdHidden) clothIdHidden.value = product.id;
         }
+
 
         const titleEl = $("#clothModalTitle");
         if (titleEl){
           titleEl.textContent = (mode === "edit") ? "edit clothing" : "add clothing";
         }
+
+        if (clothIdHidden) clothIdHidden.value = (mode === "edit" && product?.id) ? String(product.id) : "";
 
         updateDeleteButton();
       }
@@ -1448,6 +1512,7 @@ function pulseCart(){
 
       function resetAdminModal(){
         setAdminMode("create");
+        if (clothIdHidden) clothIdHidden.value = "";
         try { form?.reset(); } catch {}
         if (ownerHidden) ownerHidden.value = state.tab;
         const stockSel = form?.querySelector('[name="stock"]');
@@ -1569,15 +1634,17 @@ function pulseCart(){
 
         // safety cap
 
-        const isEdit = !!state.editProductId;
+        const editId = String(fd.get("id") || "").trim(); // only hidden field decides edit/create
+
+        const isEdit = !!editId;
         if (isEdit){
-          const idx = state.products.findIndex(x => x.id === state.editProductId);
+          const idx = state.products.findIndex(x => x.id === editId);
           const prev = idx >= 0 ? state.products[idx] : null;
 
           // In edit mode we take the current image manager state as the source of truth (can be empty if user удалил всё)
           const finalImages = images;
           const updated = normalizeProduct({
-            id: prev?.id || state.editProductId,
+            id: prev?.id || editId,
             owner: owner === "guests" ? "guests" : "item",
             category,
             name,
@@ -1594,12 +1661,14 @@ function pulseCart(){
 
           persist();
 
-          form.reset();
+          // reset editor completely (prevents "stuck edit mode" bugs)
+          try{ form?.reset(); }catch{}
           if (imageUrlsInput) imageUrlsInput.value = "";
           setDraftImages([]);
           state.editProductId = null;
           if (ownerHidden) ownerHidden.value = state.tab;
           openAdminModal(false);
+          updateDeleteButton();
 
           render();
           openProductModal(updated.id);
@@ -1619,14 +1688,21 @@ function pulseCart(){
           createdAt: Date.now()
         });
 
+        // ensure array (defensive)
+        if (!Array.isArray(state.products)) state.products = [];
+
         state.products.unshift(product);
         persist();
 
-        form.reset();
+        // hard reset to "create" after publishing (prevents accidental edits instead of new cards)
+        state.editProductId = null;
+
+        try{ form?.reset(); }catch{}
         if (imageUrlsInput) imageUrlsInput.value = "";
         setDraftImages([]);
         if (ownerHidden) ownerHidden.value = state.tab;
         openAdminModal(false);
+        updateDeleteButton();
 
         render();
         openProductModal(product.id);
@@ -1701,7 +1777,7 @@ function pulseCart(){
 
       function updateDeleteButton(){
         if (!deleteCardBtn) return;
-        const isEdit = !!state.editProductId;
+        const isEdit = !!((clothIdHidden?.value || "").trim());
         deleteCardBtn.disabled = !isEdit;
         deleteCardBtn.textContent = isEdit ? "delete" : "delete";
         deleteCardBtn.title = isEdit ? "Удалить эту карточку" : "Удаление доступно только в режиме редактирования";
@@ -1962,8 +2038,8 @@ function pulseCart(){
       });
       
       deleteCardBtn?.addEventListener("click", async () => {
-        if (!state.editProductId) return;
-        const id = state.editProductId;
+        const id = String(clothIdHidden?.value || "").trim();
+        if (!id) return;
         const p = state.products.find(x => x.id === id);
         const name = p?.name ? `“${p.name}”` : "эту карточку";
 
