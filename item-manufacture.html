@@ -216,6 +216,38 @@
   }
 
   /* cards: strictly marketplace summary */
+
+  /* sold out badge (grid cards) */
+  .card.card--shop{ position: relative; }
+  .card__badge{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid rgba(0,0,0,.16);
+    background: rgba(255,255,255,.92);
+    color: rgba(0,0,0,.72);
+    pointer-events: none;
+  }
+
+  /* sold out label (product modal) */
+  .pinfo__soldout{
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,.16);
+    background: rgba(255,255,255,.92);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.72);
+    user-select: none;
+  }
+
   .card.card--shop{
     cursor: pointer;
     transition: border-color .18s ease, transform .18s ease, opacity .18s ease;
@@ -743,6 +775,15 @@
           <input class="input" name="price" placeholder="например: 150" />
         </label>
 
+
+        <label class="col-6">
+          stock
+          <select class="select" name="stock">
+            <option value="in" selected>in stock</option>
+            <option value="soldout">sold out</option>
+          </select>
+        </label>
+
         <label class="col-12">
           name
           <input class="input" name="name" placeholder="например: KEY COAT" />
@@ -824,6 +865,7 @@
 
           <div class="pinfo__actions">
             <button id="pAdd" class="btn btn--primary" type="button">add to cart</button>
+            <div id="pSold" class="pinfo__soldout">sold out</div>
           </div>
 
           <div class="helper">
@@ -932,6 +974,7 @@
       const pThumbs = $("#pThumbs");
       const pMainWrap = $("#pMainWrap");
       const pAdd = $("#pAdd");
+      const pSold = $("#pSold");
 
       // Stats
       const statTotal = $("#statTotal");
@@ -1096,12 +1139,25 @@
         const images = Array.isArray(x?.images) ? x.images.map(String).filter(Boolean) : [];
         const legacy = String(x?.image || "").trim();
         const finalImages = images.length ? images : (legacy ? [legacy] : []);
+
+        // stock: default in stock for old DBs
+        let inStock = true;
+        if (typeof x?.inStock === "boolean") inStock = x.inStock;
+        else if (typeof x?.stock === "string"){
+          const s = x.stock.trim().toLowerCase();
+          inStock = !(s === "soldout" || s === "sold out" || s === "out" || s === "0");
+        } else if (typeof x?.status === "string"){
+          const s = x.status.trim().toLowerCase();
+          inStock = !(s === "soldout" || s === "sold out" || s === "out");
+        }
+
         return {
           id: String(x?.id || uid()),
           owner: (x?.owner === "guests") ? "guests" : "item",
           category: String(x?.category || "другое"),
           name: String(x?.name || "Untitled"),
           priceBYN: Number(x?.priceBYN || 0),
+          inStock: !!inStock,
           images: finalImages,
           // keep legacy too (optional)
           image: finalImages[0] || "",
@@ -1217,13 +1273,23 @@ function pulseCart(){
           ? `<img src="${esc(first)}" alt="${esc(p.name)}">`
           : `<div class="placeholder">image</div>`;
 
+        const badge = (p.inStock === false)
+          ? `<div class="card__badge">sold out</div>`
+          : ``;
+
+        // If sold out — hide price on the grid card
+        const price = (p.inStock === false)
+          ? ``
+          : `<div class="card__price">${money(p.priceBYN)}</div>`;
+
         return `
           <article class="card card--shop" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.name)}">
+            ${badge}
             <div class="card__media">${img}</div>
             <div class="card__body">
               <div class="card__top">
                 <h3 class="card__name">${esc(p.name)}</h3>
-                <div class="card__price">${money(p.priceBYN)}</div>
+                ${price}
               </div>
             </div>
           </article>
@@ -1362,6 +1428,7 @@ function pulseCart(){
         if (ownerHidden) ownerHidden.value = p.owner;
 
         const catSel = form?.querySelector('[name="category"]');
+        const stockSel = form?.querySelector('[name="stock"]');
         const priceIn = form?.querySelector('[name="price"]');
         const nameIn = form?.querySelector('[name="name"]');
         const descIn = form?.querySelector('[name="desc"]');
@@ -1371,6 +1438,7 @@ function pulseCart(){
         setDraftImages(Array.isArray(p.images) ? p.images : []);
 
         setSelectValue(catSel, p.category, "другое");
+        setSelectValue(stockSel, (p.inStock === false) ? "soldout" : "in", "in");
         if (priceIn) priceIn.value = String(p.priceBYN ?? "");
         if (nameIn) nameIn.value = String(p.name ?? "");
         if (descIn) descIn.value = String(p.desc ?? "");
@@ -1382,6 +1450,8 @@ function pulseCart(){
         setAdminMode("create");
         try { form?.reset(); } catch {}
         if (ownerHidden) ownerHidden.value = state.tab;
+        const stockSel = form?.querySelector('[name="stock"]');
+        setSelectValue(stockSel, "in", "in");
         if (imageUrlsInput) imageUrlsInput.value = "";
         setDraftImages([]);
         
@@ -1480,6 +1550,8 @@ function pulseCart(){
         const name = String(fd.get("name") || "").trim();
         const desc = String(fd.get("desc") || "").trim();
         const priceBYN = Number(String(fd.get("price") || "0").replace(",", "."));
+        const stockRaw = String(fd.get("stock") || "in").trim().toLowerCase();
+        const inStock = (stockRaw !== "soldout" && stockRaw !== "sold out" && stockRaw !== "out");
 
         if (!name || !Number.isFinite(priceBYN) || priceBYN <= 0){
           await uiAlert({ title: "Проверь данные", text: "Заполни название и цену (числом).", okText: "ok" });
@@ -1513,6 +1585,7 @@ function pulseCart(){
             images: finalImages,
             image: finalImages[0] || "",
             desc,
+            inStock,
             createdAt: prev?.createdAt || Date.now()
           });
 
@@ -1542,6 +1615,7 @@ function pulseCart(){
           images,
           image: images[0] || "",
           desc,
+          inStock,
           createdAt: Date.now()
         });
 
@@ -1651,9 +1725,28 @@ function pulseCart(){
 
         pName.textContent = p.name || "product";
         pMeta.textContent = `${p.owner} · ${p.category || "—"}`;
-        pPrice.textContent = money(p.priceBYN);
+
+        // Price: hidden when sold out
+        if (pPrice){
+          if (p.inStock === false){
+            pPrice.textContent = "";
+            pPrice.style.display = "none";
+          } else {
+            pPrice.style.display = "";
+            pPrice.textContent = money(p.priceBYN);
+          }
+        }
         pCategory.textContent = p.category || "—";
         pDesc.textContent = p.desc || "";
+
+        // stock UI
+        if (p.inStock === false){
+          if (pAdd) pAdd.style.display = "none";
+          if (pSold) pSold.style.display = "inline-flex";
+        } else {
+          if (pSold) pSold.style.display = "none";
+          if (pAdd) pAdd.style.display = "";
+        }
 
         if (pAdd){
           pAdd.disabled = false;
@@ -1770,6 +1863,12 @@ function pulseCart(){
       pAdd?.addEventListener("click", () => {
   const id = state.openProductId;
   if (!id) return;
+
+  const p = state.products.find(x => x.id === id);
+  if (p && p.inStock === false){
+    uiToast("sold out");
+    return;
+  }
 
   if (pAdd.dataset.busy === "true") return;
   pAdd.dataset.busy = "true";
