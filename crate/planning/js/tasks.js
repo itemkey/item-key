@@ -1,10 +1,3 @@
-const STATUSES = [
-  { key: "backlog", label: "backlog" },
-  { key: "in_progress", label: "in progress" },
-  { key: "review", label: "review" },
-  { key: "done", label: "done" },
-];
-
 const PRIORITIES = [
   { key: "low", label: "low" },
   { key: "mid", label: "mid" },
@@ -14,6 +7,14 @@ const PRIORITIES = [
 function uid(){
   if (globalThis.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function parseTags(raw){
+  return String(raw ?? "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 export class Tasks {
@@ -40,6 +41,14 @@ export class Tasks {
       return;
     }
 
+    const project = state.projects.find(p => p.id === pid);
+    const cols = (project?.columns || []).slice().sort((a,b)=>(a.order??0)-(b.order??0));
+    const firstColId = cols[0]?.id;
+    if(!firstColId){
+      this.ui.toast("no columns");
+      return;
+    }
+
     this.ui.openModal({
       title: "new task",
       bodyHtml: `
@@ -54,7 +63,7 @@ export class Tasks {
             <textarea class="ctl" name="desc" rows="4" maxlength="280"></textarea>
           </label>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form__grid2">
             <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
               deadline
               <input class="ctl" name="deadline" type="date" />
@@ -73,7 +82,7 @@ export class Tasks {
             <input class="ctl" name="tags" placeholder="study, work, exam" maxlength="80" />
           </label>
 
-          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+          <div class="form__actions">
             <button class="btn" type="button" data-close>cancel</button>
             <button class="btn" type="submit">create</button>
           </div>
@@ -86,20 +95,18 @@ export class Tasks {
         const task = {
           id: uid(),
           projectId: pid,
+          columnId: firstColId,
           name,
           desc: String(data.desc ?? "").trim(),
-          status: "backlog",
           priority: String(data.priority ?? "mid"),
           deadline: String(data.deadline ?? ""),
-          tags: String(data.tags ?? "")
-            .split(",")
-            .map(s => s.trim())
-            .filter(Boolean)
-            .slice(0, 8),
+          tags: parseTags(data.tags),
           createdAt: Date.now(),
         };
 
         this.store.patch((s) => s.tasks.push(task));
+
+        document.dispatchEvent(new CustomEvent("planning:tasksChanged"));
         this.ui.closeModal();
         this.ui.toast("task created");
         if (this.boardEl) this.renderBoard(this.boardEl);
@@ -112,6 +119,9 @@ export class Tasks {
 
     const state = this.store.getState();
     const pid = state.activeProjectId;
+    const project = state.projects.find(p => p.id === pid);
+    const cols = (project?.columns || []).slice().sort((a,b)=>(a.order??0)-(b.order??0));
+
     const all = state.tasks.filter(t => t.projectId === pid);
 
     const filtered = this.search
@@ -124,18 +134,29 @@ export class Tasks {
     boardEl.innerHTML = "";
     boardEl.hidden = false;
 
-    for (const col of STATUSES) {
+    if(!cols.length){
+      boardEl.innerHTML = `
+        <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase; opacity:.65;">
+          no columns
+        </div>`;
+      return;
+    }
+
+    for (const col of cols) {
       const colEl = document.createElement("section");
       colEl.className = "column";
-      colEl.dataset.status = col.key;
+      colEl.dataset.colId = col.id;
 
       const items = filtered
-        .filter(t => t.status === col.key)
+        .filter(t => t.columnId === col.id)
         .sort((a, b) => (a.deadline || "").localeCompare(b.deadline || "") || (b.createdAt - a.createdAt));
 
       colEl.innerHTML = `
         <div class="column__head">
-          <div class="column__title">${col.label}</div>
+          <div class="column__title">
+            <span class="col-dot" style="--c:${escapeAttr(col.color || "#111111")}"></span>
+            ${escapeHtml(col.name)}
+          </div>
           <div class="column__count">${items.length}</div>
         </div>
         <div class="column__dropzone" data-dropzone></div>
@@ -147,17 +168,23 @@ export class Tasks {
         e.preventDefault();
         const taskId = e.dataTransfer.getData("text/taskId");
         if (!taskId) return;
-        this.moveTask(taskId, col.key);
+        this.moveTask(taskId, col.id);
       });
 
-      for (const task of items) zone.appendChild(this.renderCard(task));
+      for (const task of items) zone.appendChild(this.renderCard(task, project));
       boardEl.appendChild(colEl);
     }
   }
 
-  renderCard(task) {
+  renderCard(task, project) {
     const el = document.createElement("article");
-    el.className = "card";
+    const col = project?.columns?.find(c => c.id === task.columnId);
+    const accent = col?.color || "#111111";
+    const isDone = col?.role === "done";
+
+    el.className = "card" + (isDone ? " card--done" : "");
+    el.style.setProperty("--accent", accent);
+
     el.draggable = true;
     el.dataset.id = task.id;
 
@@ -190,6 +217,16 @@ export class Tasks {
     const task = state.tasks.find(t => t.id === taskId);
     if (!task) return;
 
+    const project = state.projects.find(p => p.id === task.projectId);
+    const cols = (project?.columns || []).slice().sort((a,b)=>(a.order??0)-(b.order??0));
+    const colOptions = cols.map(c =>
+      `<option value="${escapeAttr(c.id)}" ${c.id===task.columnId ? "selected" : ""}>${escapeHtml(String(c.name).toUpperCase())}</option>`
+    ).join("");
+
+    const projectOptions = state.projects.map(p => `
+      <option value="${escapeAttr(p.id)}" ${p.id===task.projectId ? "selected":""}>${escapeHtml(String(p.name ?? "").toUpperCase())}</option>
+    `).join("");
+
     this.ui.openModal({
       title: "task",
       bodyHtml: `
@@ -204,33 +241,42 @@ export class Tasks {
             <textarea class="ctl" name="desc" rows="5" maxlength="280">${escapeHtml(task.desc || "")}</textarea>
           </label>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form__grid2">
             <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
-              status
-              <select class="ctl" name="status">
-                ${STATUSES.map(s => `<option value="${s.key}" ${s.key===task.status?"selected":""}>${s.label.toUpperCase()}</option>`).join("")}
+              project
+              <select class="ctl" name="projectId">
+                ${projectOptions}
               </select>
             </label>
 
+            <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
+              column
+              <select class="ctl" name="columnId">
+                ${colOptions || ""}
+              </select>
+            </label>
+          </div>
+
+          <div class="form__grid2">
             <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
               priority
               <select class="ctl" name="priority">
                 ${PRIORITIES.map(p => `<option value="${p.key}" ${p.key===task.priority?"selected":""}>${p.label.toUpperCase()}</option>`).join("")}
               </select>
             </label>
-          </div>
 
-          <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
-            deadline
-            <input class="ctl" name="deadline" type="date" value="${escapeAttr(task.deadline || "")}" />
-          </label>
+            <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
+              deadline
+              <input class="ctl" name="deadline" type="date" value="${escapeAttr(task.deadline || "")}" />
+            </label>
+          </div>
 
           <label style="display:grid; gap:6px; font-size:11px; letter-spacing:2px; text-transform:uppercase;">
             tags (comma)
             <input class="ctl" name="tags" maxlength="80" value="${escapeAttr((task.tags||[]).join(", "))}" />
           </label>
 
-          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+          <div class="form__actions">
             <button class="btn" type="button" data-close>close</button>
             <button class="btn" type="submit">save</button>
           </div>
@@ -240,23 +286,36 @@ export class Tasks {
         const name = String(data.name ?? "").trim();
         if (!name) return;
 
-        const tags = String(data.tags ?? "")
-          .split(",")
-          .map(s => s.trim())
-          .filter(Boolean)
-          .slice(0, 8);
+        const newProjectId = String(data.projectId ?? task.projectId);
+        const tags = parseTags(data.tags);
 
         this.store.patch((s) => {
           const t = s.tasks.find(x => x.id === taskId);
           if (!t) return;
+
+          // apply base fields
           t.name = name;
           t.desc = String(data.desc ?? "").trim();
-          t.status = String(data.status ?? "backlog");
           t.priority = String(data.priority ?? "mid");
           t.deadline = String(data.deadline ?? "");
           t.tags = tags;
+
+          const prevProjectId = t.projectId;
+          t.projectId = newProjectId;
+
+          // if project changed -> put into first column of target project
+          if(prevProjectId !== newProjectId){
+            const proj = s.projects.find(p => p.id === newProjectId);
+            const cols2 = (proj?.columns || []).slice().sort((a,b)=>(a.order??0)-(b.order??0));
+            t.columnId = cols2[0]?.id || t.columnId;
+          } else {
+            // same project -> allow changing column
+            const newColId = String(data.columnId ?? t.columnId);
+            t.columnId = newColId || t.columnId;
+          }
         });
 
+        document.dispatchEvent(new CustomEvent("planning:tasksChanged"));
         this.ui.closeModal();
         this.ui.toast("task saved");
         if (this.boardEl) this.renderBoard(this.boardEl);
@@ -272,7 +331,7 @@ export class Tasks {
           <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:rgba(0,0,0,.75); line-height:1.5;">
             confirm deletion. this action cannot be undone.
           </div>
-          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+          <div class="form__actions">
             <button class="btn" type="button" data-close>cancel</button>
             <button class="btn" type="submit">delete</button>
           </div>
@@ -280,6 +339,8 @@ export class Tasks {
       `,
       onSubmit: () => {
         this.store.patch((s) => { s.tasks = s.tasks.filter(t => t.id !== taskId); });
+
+        document.dispatchEvent(new CustomEvent("planning:tasksChanged"));
         this.ui.closeModal();
         this.ui.toast("task deleted");
         if (this.boardEl) this.renderBoard(this.boardEl);
@@ -287,13 +348,43 @@ export class Tasks {
     });
   }
 
-  moveTask(taskId, newStatus) {
+  moveTask(taskId, newColumnId) {
     this.store.patch((s) => {
       const t = s.tasks.find(x => x.id === taskId);
       if (!t) return;
-      t.status = newStatus;
+      t.columnId = newColumnId;
     });
+
+    document.dispatchEvent(new CustomEvent("planning:tasksChanged"));
     this.ui.toast("moved");
+    if (this.boardEl) this.renderBoard(this.boardEl);
+  }
+
+  // drag task onto project-chip
+  moveTaskToProject(taskId, projectId) {
+    const pid = String(projectId || "");
+    if (!pid) return;
+
+    this.store.patch((s) => {
+      const t = s.tasks.find(x => x.id === taskId);
+      if (!t) return;
+
+      const prev = t.projectId;
+      t.projectId = pid;
+
+      const proj = s.projects.find(p => p.id === pid);
+      const cols = (proj?.columns || []).slice().sort((a,b)=>(a.order??0)-(b.order??0));
+      const firstColId = cols[0]?.id;
+
+      if(prev !== pid && firstColId){
+        t.columnId = firstColId;
+      } else if(!t.columnId && firstColId){
+        t.columnId = firstColId;
+      }
+    });
+
+    document.dispatchEvent(new CustomEvent("planning:tasksChanged"));
+    this.ui.toast("moved to project");
     if (this.boardEl) this.renderBoard(this.boardEl);
   }
 }

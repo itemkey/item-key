@@ -16,7 +16,7 @@ export class UI {
     });
   }
 
-  openModal({ title, bodyHtml, onSubmit }) {
+  openModal({ title, bodyHtml, onSubmit, onMount }) {
     if (!this.modalEl || !this.modalTitleEl || !this.modalBodyEl) {
       console.error("Modal elements not found (#modal/#modalTitle/#modalBody).");
       return;
@@ -25,6 +25,7 @@ export class UI {
     this.modalTitleEl.textContent = title;
     this.modalBodyEl.innerHTML = bodyHtml;
 
+    // bind submit (if any)
     const form = this.modalBodyEl.querySelector("form");
     if (form && onSubmit) {
       form.addEventListener("submit", (e) => {
@@ -33,6 +34,11 @@ export class UI {
         const data = Object.fromEntries(fd.entries());
         onSubmit(data, form);
       });
+    }
+
+    // custom mount hook (buttons, dynamic UI)
+    if (typeof onMount === "function") {
+      onMount(this.modalBodyEl, this.modalEl);
     }
 
     // жёстко показываем (на случай конфликтов hidden/display)
