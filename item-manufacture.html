@@ -264,6 +264,32 @@
   }
   .card.card--shop .card__body{ gap: 6px; }
 
+  /* stock divider (in stock / sold out) */
+  .stock-sep{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin: 10px 0 6px;
+    padding: 6px 2px;
+    color: rgba(0,0,0,.62);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .stock-sep::before,
+  .stock-sep::after{
+    content:"";
+    height: 1px;
+    flex: 1 1 auto;
+    background: rgba(0,0,0,.10);
+  }
+  .stock-sep .t{
+    white-space: nowrap;
+  }
+
+
   /* mobile modal layout */
   @media (max-width: 980px){
     .pmodal__card{
@@ -574,6 +600,135 @@
   filter: blur(0);
 }
 
+
+/* ===== SET category (special) ===== */
+#setPickerWrap{ display:none; }
+#clothForm.is-set-mode #setPickerWrap{ display:block; }
+#clothForm.is-set-mode .set-hide{ display:none !important; }
+.set-only{ display:none; }
+
+.setpicker{
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.86);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.setpicker__title{
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.75);
+}
+.setpicker__grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.settile{
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.90);
+  overflow: hidden;
+  cursor: pointer;
+  user-select:none;
+  display:grid;
+  grid-template-rows: 96px auto;
+}
+.settile__img{
+  background: linear-gradient(180deg, rgba(0,0,0,.018), transparent 60%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.settile__img img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+.settile__body{
+  padding: 10px;
+  display:grid;
+  gap: 6px;
+}
+.settile__name{
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settile__meta{
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settile__check{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  font-size: 11px;
+  color: rgba(0,0,0,.70);
+}
+.settile input{ accent-color: rgba(0,0,0,.72); }
+
+/* product modal: set items strip */
+.pset{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  display:grid;
+  gap: 10px;
+}
+.pset__title{
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.70);
+}
+.pset__grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+.pset__item{
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.90);
+  overflow:hidden;
+  cursor:pointer;
+  display:grid;
+  grid-template-rows: 86px auto;
+}
+.pset__item img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+.pset__item .t{
+  padding: 8px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+/* ===== SET cards (category: set) ===== */
+.card--set .card__body{display:none !important;}
+.card--set .card__top{display:none !important;}
+.card--set{cursor:pointer;}
 </style>
 </head>
 
@@ -635,11 +790,15 @@
           </div>
 
           <div id="sectionChips" class="chips" aria-label="Разделы">
+            
             <button class="chip" type="button" data-cat="all" data-active="true">всё</button>
             <button class="chip" type="button" data-cat="верх">верх</button>
             <button class="chip" type="button" data-cat="низ">низ</button>
-            <button class="chip" type="button" data-cat="аксессуары">аксессуары</button>
+            <button class="chip" type="button" data-cat="мешок">мешок</button>
             <button class="chip" type="button" data-cat="на голову">на голову</button>
+            <button class="chip" type="button" data-cat="аксессуары">аксессуары</button>
+            <button class="chip" type="button" data-cat="set">set</button>
+
           </div>
         </div>
       </div>
@@ -763,21 +922,34 @@
         <label class="col-6">
           category
           <select class="select" name="category">
+            
             <option value="верх">верх</option>
             <option value="низ">низ</option>
+            <option value="set">set</option>
+            <option value="мешок">мешок</option>
             <option value="аксессуары">аксессуары</option>
             <option value="на голову">на голову</option>
             <option value="другое">другое</option>
+          
           </select>
         </label>
 
-        <label class="col-6">
+        <!-- SET: pick existing items (only when category=set) -->
+        <div class="col-12 set-only" id="setPickerWrap">
+          <div class="setpicker">
+            <div class="setpicker__title">set items (choose existing products)</div>
+            <div class="helper">Отметь вещи, которые входят в этот set. В set показываются первые фотки выбранных вещей — кликабельные (переход в карточку).</div>
+            <div class="setpicker__grid" id="setPickerList"></div>
+          </div>
+        </div>
+
+        <label class="col-6 set-hide">
           price (BYN)
           <input class="input" name="price" placeholder="например: 150" />
         </label>
 
 
-        <label class="col-6">
+        <label class="col-6 set-hide">
           stock
           <select class="select" name="stock">
             <option value="in" selected>in stock</option>
@@ -785,12 +957,12 @@
           </select>
         </label>
 
-        <label class="col-12">
+        <label class="col-12 set-hide">
           name
           <input class="input" name="name" placeholder="например: KEY COAT" />
         </label>
 
-        <label class="col-12">
+        <label class="col-12 set-hide">
           description
           <textarea class="input" name="desc" placeholder="детали, материал, посадка, смысл"></textarea>
         </label>
@@ -863,6 +1035,11 @@
           </div>
 
           <p class="pinfo__desc" id="pDesc"></p>
+
+          <div id="pSetBlock" class="pset" style="display:none;">
+            <div class="pset__title">set items</div>
+            <div class="pset__grid" id="pSetGrid"></div>
+          </div>
 
           <div class="pinfo__actions">
             <button id="pAdd" class="btn btn--primary" type="button">add to cart</button>
@@ -963,6 +1140,11 @@
       const imgClearBtn = $("#imgClearBtn");
       const imgPreviewGrid = $("#imgPreviewGrid");
 
+      // SET (special category) UI
+      const setPickerWrap = $("#setPickerWrap");
+      const setPickerList = $("#setPickerList");
+      const catSelect = form?.querySelector('[name="category"]');
+
       // Product modal UI
       const pModal = $("#productModal");
       const pClose = $("#pClose");
@@ -977,6 +1159,8 @@
       const pMainWrap = $("#pMainWrap");
       const pAdd = $("#pAdd");
       const pSold = $("#pSold");
+      const pSetBlock = $("#pSetBlock");
+      const pSetGrid = $("#pSetGrid");
 
       // Stats
       const statTotal = $("#statTotal");
@@ -1113,6 +1297,14 @@
         return (c || "").trim().toLowerCase() || "другое";
       }
 
+      function isSetCat(c){
+        return normCat(c) === "set";
+      }
+      function isSetProduct(p){
+        if (!p) return false;
+        return isSetCat(p.category) || String(p.type || "").toLowerCase() === "set" || p.isSet === true;
+      }
+
       function loadJSON(key, fallback){
         try{
           const raw = localStorage.getItem(key);
@@ -1197,50 +1389,76 @@
         const legacy = String(x?.image || "").trim();
         const finalImages = images.length ? images : (legacy ? [legacy] : []);
 
-        // stock: default in stock for old DBs
+        const category = String(x?.category || "другое");
+        const _isSet = isSetCat(category) || String(x?.type || "").toLowerCase() === "set" || x?.isSet === true;
+
+        // stock: default in stock for old DBs (sets are always "in" as they are not directly purchasable here)
         let inStock = true;
-        if (typeof x?.inStock === "boolean") inStock = x.inStock;
-        else if (typeof x?.stock === "string"){
-          const s = x.stock.trim().toLowerCase();
-          inStock = !(s === "soldout" || s === "sold out" || s === "out" || s === "0");
-        } else if (typeof x?.status === "string"){
-          const s = x.status.trim().toLowerCase();
-          inStock = !(s === "soldout" || s === "sold out" || s === "out");
+        if (!_isSet){
+          if (typeof x?.inStock === "boolean") inStock = x.inStock;
+          else if (typeof x?.stock === "string"){
+            const s = x.stock.trim().toLowerCase();
+            inStock = !(s === "soldout" || s === "sold out" || s === "out" || s === "0");
+          } else if (typeof x?.status === "string"){
+            const s = x.status.trim().toLowerCase();
+            inStock = !(s === "soldout" || s === "sold out" || s === "out");
+          }
         }
+
+        const setItemsRaw = Array.isArray(x?.setItems) ? x.setItems : (Array.isArray(x?.items) ? x.items : []);
+        const setItems = (setItemsRaw || []).map(v => String(v || "").trim()).filter(Boolean);
+
+        const name = _isSet ? (String(x?.name || "").trim() || "set") : (String(x?.name || "Untitled"));
+        const priceBYN = Number(x?.priceBYN || 0) || 0;
+        const desc = _isSet ? "" : String(x?.desc || "");
 
         return {
           id: String(x?.id || uid()),
           owner: (x?.owner === "guests") ? "guests" : "item",
-          category: String(x?.category || "другое"),
-          name: String(x?.name || "Untitled"),
-          priceBYN: Number(x?.priceBYN || 0),
-          inStock: !!inStock,
+          category,
+          type: _isSet ? "set" : "product",
+          isSet: _isSet,
+          setItems,
+          name,
+          priceBYN: _isSet ? 0 : priceBYN,
+          inStock: _isSet ? true : !!inStock,
           images: finalImages,
           // keep legacy too (optional)
           image: finalImages[0] || "",
-          desc: String(x?.desc || ""),
+          desc,
           createdAt: Number(x?.createdAt || Date.now())
         };
       }
 
-      async function loadProducts(){
+      function loadProducts() {
+      try {
+        // 1. Пытаемся загрузить JSON-файл (работает через сервер)
+        if (location.protocol !== "file:") {
+          return fetch("assets/js/item-manufacture.db.json")
+            .then(res => {
+              if (!res.ok) throw new Error("DB not found");
+              return res.json();
+            })
+            .then(data => Array.isArray(data) ? data.map(normalizeProduct) : [])
+            .catch(() => {
+              // fallback ниже
+              const existing = loadJSON(KEY_PRODUCTS, null);
+              if (Array.isArray(existing)) return existing.map(normalizeProduct);
+              return [];
+            });
+        }
+
+        // 2. Fallback: localStorage (если file://)
         const existing = loadJSON(KEY_PRODUCTS, null);
         if (Array.isArray(existing)) return existing.map(normalizeProduct);
 
-        try{
-          const res = await fetch(SEED_URL, { cache: "no-store" });
-          if (!res.ok) throw new Error("seed not found");
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            const normalized = data.map(normalizeProduct);
-            saveJSON(KEY_PRODUCTS, normalized);
-            return normalized;
-          }
-        }catch{
-          // ignore
-        }
+        return [];
+      } catch (e) {
+        console.warn("loadProducts error:", e);
         return [];
       }
+    }
+
 
       function setTab(tab, opts = {}){
         // Smart no-op: clicking the active tab again does nothing
@@ -1287,17 +1505,23 @@
 
       function filtered(){
         const q = state.query.trim().toLowerCase();
+        const sec = normCat(state.section);
+
         return state.products
           .filter(p => state.tab === "home" ? false : (p.owner === state.tab))
-          .filter(p => state.section === "all" ? true : normCat(p.category) === normCat(state.section))
+          // IMPORTANT: "all" excludes SET — sets live only inside the "set" section
+          .filter(p => {
+            if (sec === "all") return !isSetProduct(p);
+            if (sec === "set") return isSetProduct(p);
+            return normCat(p.category) === sec;
+          })
           .filter(p => {
             if (!q) return true;
             const hay = `${p.name} ${p.desc} ${p.category}`.toLowerCase();
             return hay.includes(q);
           });
       }
-
-      function renderStats(){
+function renderStats(){
         if (!statTotal) return;
         const total = state.products.length;
         const item = state.products.filter(p => p.owner === "item").length;
@@ -1330,27 +1554,38 @@ function pulseCart(){
           ? `<img src="${esc(first)}" alt="${esc(p.name)}">`
           : `<div class="placeholder">image</div>`;
 
-        const badge = (p.inStock === false)
+        const isSet = isSetProduct(p);
+
+        const badge = (!isSet && p.inStock === false)
           ? `<div class="card__badge">sold out</div>`
           : ``;
 
-        // If sold out — hide price on the grid card
-        const price = (p.inStock === false)
+        // If set or sold out — hide price on the grid card
+        const price = (isSet || p.inStock === false)
           ? ``
           : `<div class="card__price">${money(p.priceBYN)}</div>`;
 
-        return `
-          <article class="card card--shop" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.name)}">
-            ${badge}
-            <div class="card__media">${img}</div>
-            <div class="card__body">
-              <div class="card__top">
-                <h3 class="card__name">${esc(p.name)}</h3>
-                ${price}
-              </div>
-            </div>
-          </article>
-        `;
+        const inner = isSet
+  ? `
+      ${badge}
+      <div class="card__media">${img}</div>
+    `
+  : `
+      ${badge}
+      <div class="card__media">${img}</div>
+      <div class="card__body">
+        <div class="card__top">
+          <h3 class="card__name">${esc(p.name)}</h3>
+          ${price}
+        </div>
+      </div>
+    `;
+
+return `
+  <article class="card card--shop ${isSet ? "card--set" : ""}" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(isSet ? "set" : p.name)}">
+    ${inner}
+  </article>
+`;
       }
 
       function renderGrid(){
@@ -1373,7 +1608,18 @@ function pulseCart(){
           return;
         }
 
-        grid.innerHTML = list.map(cardHTML).join("");
+        // in-stock first, then sold out (with a divider)
+        const inList = list.filter(p => p.inStock !== false);
+        const outList = list.filter(p => p.inStock === false);
+
+        let html = "";
+        if (inList.length) html += inList.map(cardHTML).join("");
+        if (inList.length && outList.length){
+          html += `<div class="stock-sep" aria-hidden="true"><span class="t">sold out</span></div>`;
+        }
+        if (outList.length) html += outList.map(cardHTML).join("");
+
+        grid.innerHTML = html;
         animateGrid();
       }
 
@@ -1502,6 +1748,10 @@ function pulseCart(){
         setDraftImages(Array.isArray(p.images) ? p.images : []);
 
         setSelectValue(catSel, p.category, "другое");
+
+        // SET: fill picker
+        renderSetPicker(p.owner, Array.isArray(p.setItems) ? p.setItems : []);
+        applySetMode();
         setSelectValue(stockSel, (p.inStock === false) ? "soldout" : "in", "in");
         if (priceIn) priceIn.value = String(p.priceBYN ?? "");
         if (nameIn) nameIn.value = String(p.name ?? "");
@@ -1519,6 +1769,10 @@ function pulseCart(){
         setSelectValue(stockSel, "in", "in");
         if (imageUrlsInput) imageUrlsInput.value = "";
         setDraftImages([]);
+
+        // SET: reset picker
+        renderSetPicker(state.tab, []);
+        applySetMode();
         
         updateDeleteButton();
       }
@@ -1618,10 +1872,27 @@ function pulseCart(){
         const stockRaw = String(fd.get("stock") || "in").trim().toLowerCase();
         const inStock = (stockRaw !== "soldout" && stockRaw !== "sold out" && stockRaw !== "out");
 
-        if (!name || !Number.isFinite(priceBYN) || priceBYN <= 0){
-          await uiAlert({ title: "Проверь данные", text: "Заполни название и цену (числом).", okText: "ok" });
-          return;
+        const isSet = isSetCat(category);
+        const setItems = isSet
+          ? Array.from(form.querySelectorAll('input[name="setItems"]:checked')).map(x => String(x.value || "").trim()).filter(Boolean)
+          : [];
+
+        if (isSet){
+          if (!setItems.length){
+            await uiAlert({ title: "SET пуст", text: "Выбери хотя бы одну вещь, которая входит в set.", okText: "ok" });
+            return;
+          }
+        } else {
+          if (!name || !Number.isFinite(priceBYN) || priceBYN <= 0){
+            await uiAlert({ title: "Проверь данные", text: "Заполни название и цену (числом).", okText: "ok" });
+            return;
+          }
         }
+
+        const nameFinal = isSet ? "set" : name;
+        const priceFinal = isSet ? 0 : priceBYN;
+        const descFinal = isSet ? "" : desc;
+        const inStockFinal = isSet ? true : inStock;
 
         // urls (comma/newline separated) — if user typed urls and didn't press "add urls", we still take them
         const urlsRaw = String(fd.get("imageUrls") || "");
@@ -1647,12 +1918,15 @@ function pulseCart(){
             id: prev?.id || editId,
             owner: owner === "guests" ? "guests" : "item",
             category,
-            name,
-            priceBYN,
+            name: nameFinal,
+            priceBYN: priceFinal,
+            type: isSet ? "set" : "product",
+            isSet,
+            setItems,
             images: finalImages,
             image: finalImages[0] || "",
-            desc,
-            inStock,
+            desc: descFinal,
+            inStock: inStockFinal,
             createdAt: prev?.createdAt || Date.now()
           });
 
@@ -1679,12 +1953,15 @@ function pulseCart(){
           id: uid(),
           owner: owner === "guests" ? "guests" : "item",
           category,
-          name,
-          priceBYN,
+          name: nameFinal,
+          priceBYN: priceFinal,
+          type: isSet ? "set" : "product",
+          isSet,
+          setItems,
           images,
           image: images[0] || "",
-          desc,
-          inStock,
+          desc: descFinal,
+          inStock: inStockFinal,
           createdAt: Date.now()
         });
 
@@ -1784,6 +2061,62 @@ function pulseCart(){
       }
 
 
+
+
+      // ===== SET category (special) =====
+      function getSetCandidates(owner){
+        // show only non-set products, same owner scope
+        return (state.products || [])
+          .filter(p => p && p.owner === owner)
+          .filter(p => !isSetProduct(p));
+      }
+
+      function renderSetPicker(owner, selectedIds = []){
+        if (!setPickerList) return;
+        const sel = new Set((selectedIds || []).map(String));
+        const list = getSetCandidates(owner);
+
+        if (!list.length){
+          setPickerList.innerHTML = `<div class="helper">Пока нет товаров, которые можно собрать в set. Сначала создай обычные карточки.</div>`;
+          return;
+        }
+
+        setPickerList.innerHTML = list.map(p => {
+          const cover = (p.images && p.images[0]) ? p.images[0] : "";
+          const img = cover
+            ? `<img src="${esc(cover)}" alt="${esc(p.name)}">`
+            : `<div class="placeholder" style="font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(0,0,0,.45);">image</div>`;
+          const checked = sel.has(p.id) ? "checked" : "";
+
+          return `
+            <label class="settile" data-id="${esc(p.id)}">
+              <div class="settile__img">${img}</div>
+              <div class="settile__body">
+                <div class="settile__name">${esc(p.name || "item")}</div>
+                <div class="settile__meta">${esc(p.category || "—")}</div>
+                <div class="settile__check">
+                  <input type="checkbox" name="setItems" value="${esc(p.id)}" ${checked}>
+                  <span>include</span>
+                </div>
+              </div>
+            </label>
+          `;
+        }).join("");
+      }
+
+      function applySetMode(){
+        if (!form) return;
+        const cat = String(catSelect?.value || form.querySelector('[name="category"]')?.value || "");
+        const on = isSetCat(cat);
+        form.classList.toggle("is-set-mode", on);
+
+        const owner = String(ownerHidden?.value || state.tab || "item");
+        if (on){
+          const selected = Array.from(form.querySelectorAll('input[name="setItems"]:checked')).map(x => x.value);
+          renderSetPicker(owner, selected);
+        }
+      }
+
       function render(){
         renderGrid();
         renderCart();
@@ -1801,10 +2134,11 @@ function pulseCart(){
 
         pName.textContent = p.name || "product";
         pMeta.textContent = `${p.owner} · ${p.category || "—"}`;
+        const isSet = isSetProduct(p);
 
-        // Price: hidden when sold out
+        // Price: hidden when sold out OR when it's a SET
         if (pPrice){
-          if (p.inStock === false){
+          if (isSet || p.inStock === false){
             pPrice.textContent = "";
             pPrice.style.display = "none";
           } else {
@@ -1813,10 +2147,40 @@ function pulseCart(){
           }
         }
         pCategory.textContent = p.category || "—";
-        pDesc.textContent = p.desc || "";
+        pDesc.textContent = isSet ? "" : (p.desc || "");
+        if (pDesc) pDesc.style.display = isSet ? "none" : "";
 
-        // stock UI
-        if (p.inStock === false){
+                // SET block
+        if (pSetBlock && pSetGrid){
+          if (isSet){
+            const ids = Array.isArray(p.setItems) ? p.setItems : [];
+            const items = ids.map(id => state.products.find(x => x.id === id)).filter(Boolean);
+
+            pSetGrid.innerHTML = items.map(it => {
+              const cover = (it.images && it.images[0]) ? it.images[0] : "";
+              const img = cover
+                ? `<img src="${esc(cover)}" alt="${esc(it.name)}">`
+                : `<div class="placeholder" style="font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(0,0,0,.45);">image</div>`;
+
+              return `
+                <div class="pset__item" data-open="${esc(it.id)}" role="button" tabindex="0" aria-label="Open ${esc(it.name)}">
+                  ${img}
+                  <div class="t">${esc(it.name || "item")}</div>
+                </div>
+              `;
+            }).join("");
+
+            pSetBlock.style.display = "";
+          } else {
+            pSetBlock.style.display = "none";
+            pSetGrid.innerHTML = "";
+          }
+        }
+        // stock UI (sets are not directly purchasable here)
+        if (isSet){
+          if (pAdd) pAdd.style.display = "none";
+          if (pSold) pSold.style.display = "none";
+        } else if (p.inStock === false){
           if (pAdd) pAdd.style.display = "none";
           if (pSold) pSold.style.display = "inline-flex";
         } else {
@@ -1936,6 +2300,27 @@ function pulseCart(){
         setMainImage(Number(t.dataset.i));
       });
 
+      // SET items click -> open referenced product
+      pSetGrid?.addEventListener("click", (e) => {
+        const it = e.target.closest(".pset__item");
+        if (!it) return;
+        const openId = String(it.dataset.open || "");
+        if (!openId) return;
+        openProductModal(openId);
+      });
+
+      pSetGrid?.addEventListener("keydown", (e) => {
+        const it = e.target.closest(".pset__item");
+        if (!it) return;
+        if (e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          const openId = String(it.dataset.open || "");
+          if (!openId) return;
+          openProductModal(openId);
+        }
+      });
+
+
       pAdd?.addEventListener("click", () => {
   const id = state.openProductId;
   if (!id) return;
@@ -1991,6 +2376,7 @@ function pulseCart(){
       modal?.addEventListener("click", (e) => { if (e.target === modal) { openAdminModal(false); resetAdminModal(); } });
 
       form?.addEventListener("submit", onPublish);
+      catSelect?.addEventListener("change", applySetMode);
 
       // image manager events
       imgBrowseBtn?.addEventListener("click", () => imgFileInput?.click());
