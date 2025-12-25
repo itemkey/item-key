@@ -6016,10 +6016,74 @@ function attachSectionToggles(wrapper) {
             };
           }
         }
-        // fallback: выбираем точный факт
+        // fallback: строим нормальный вопрос под тип
+        const ctxTopic = (() => {
+          const topicNode = (patternNode && patternNode.parentId) ? getNode(patternNode.parentId) : null;
+          const groupNode = (topicNode && topicNode.parentId) ? getNode(topicNode.parentId) : null;
+          return {
+            topicNode,
+            groupNode,
+            topicName: topicNode ? (topicNode.name || '') : '',
+            groupId: groupNode ? groupNode.id : (topicNode ? topicNode.id : 'root')
+          };
+        })();
+
+// ФАКТЫ (assertion)
+if(type === 'assertion'){
+  const topicLabel = ctxTopic.topicName || (patternNode && patternNode.name) || 'теме';
+  const forward = direction !== 'reverse';
+  if(forward){
+    return {
+      promptTitle: 'Что верно про «' + topicLabel + '»?',
+      promptText: 'Выбери утверждение, которое относится именно к этой теме (один верный вариант).',
+      answer: raw.trim() || '(пусто)',
+      explain: raw,
+      poolKey: 'assertion:topic2text:' + ctxTopic.groupId,
+      // важно: отвлекающие НЕ из того же паттерна (иначе может быть несколько «правильных»)
+      noSamePattern: true
+    };
+  }else{
+    return {
+      promptTitle: 'О ком / о чём это утверждение?',
+      promptText: raw.trim() || '(пусто)',
+      answer: topicLabel,
+      explain: 'Тема: ' + topicLabel + '\n' + raw,
+      poolKey: 'assertion:text2topic:' + ctxTopic.groupId
+    };
+  }
+}
+
+// ОБЪЕКТНЫЕ СПИСКИ (olist)
+if(type === 'olist'){
+  const topicLabel = ctxTopic.topicName || (patternNode && patternNode.name) || 'списку';
+  const forward = direction !== 'reverse';
+  if(forward){
+    return {
+      promptTitle: 'Что относится к «' + topicLabel + '»?',
+      promptText: 'Выбери элемент, который встречается в этом списке (один верный вариант).',
+      answer: raw.trim() || '(пусто)',
+      explain: raw,
+      poolKey: 'olist:topic2item:' + ctxTopic.groupId,
+      noSamePattern: true
+    };
+  }else{
+    return {
+      promptTitle: 'К какому списку относится этот элемент?',
+      promptText: raw.trim() || '(пусто)',
+      answer: topicLabel,
+      explain: 'Список: ' + topicLabel + '\n' + raw,
+      poolKey: 'olist:item2topic:' + ctxTopic.groupId
+    };
+  }
+}
+
+
+        // generic fallback
         return {
           promptTitle: 'Выбери правильный текст:',
-          promptText: (patternNode && patternNode.name) ? ('Паттерн: ' + patternNode.name) : 'Паттерн',
+          promptText: (ctxTopic.topicName
+            ? ('Тема: ' + ctxTopic.topicName)
+            : ((patternNode && patternNode.name) ? ('Паттерн: ' + patternNode.name) : 'Паттерн')),
           answer: raw.trim() || '(пусто)',
           explain: raw,
           poolKey: type + ':full'
@@ -6067,6 +6131,7 @@ function attachSectionToggles(wrapper) {
             patternId: ch.id,
             patternName: ch.name || '(паттерн)',
             parentCategoryId: ch.parentId || null,
+            noSamePattern: !!qa.noSamePattern,
             cardId: card.id || null
           };
           questions.push(q);
@@ -6102,9 +6167,11 @@ function attachSectionToggles(wrapper) {
 
     function pickSmartDistractors(q, pools, pattPools, needed){
       const poolAll = (pools[q.poolKey] || []).filter(v => v !== q.answer);
-      const poolSame = (pattPools[q.poolKey] && q.patternId && pattPools[q.poolKey][q.patternId])
-        ? (pattPools[q.poolKey][q.patternId].filter(v => v !== q.answer))
-        : [];
+      const poolSame = (q && q.noSamePattern)
+        ? []
+        : ((pattPools[q.poolKey] && q.patternId && pattPools[q.poolKey][q.patternId])
+          ? (pattPools[q.poolKey][q.patternId].filter(v => v !== q.answer))
+          : []);
 
       const candidates = __uniq(poolSame.concat(poolAll));
       if(!candidates.length) return [];
