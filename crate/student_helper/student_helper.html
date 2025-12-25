@@ -980,86 +980,7 @@
       display: none;
     }
 
-    /* overlays: тесты и просмотр фактов */
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.93);
-      z-index: 40;
-    }
-
-    .overlay-card {
-      width: min(860px, 100% - 40px);
-      max-height: min(600px, 100% - 80px);
-      background: #000;
-      border: 1px solid #fff;
-      padding: 16px 18px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .overlay-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 1px dashed #fff;
-      padding-bottom: 6px;
-    }
-
-    .overlay-title {
-      font-size: 20px;
-      text-transform: uppercase;
-      display: inline-block;
-      transform: scaleY(1.4);
-      transform-origin: center;
-      letter-spacing: 0.14em;
-    }
-
-    .overlay-subtitle,
-    .overlay-progress {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .overlay-body {
-      flex: 1;
-      overflow-y: auto;
-      font-size: 13px;
-    }
-
-    .quiz-question {
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-
-    .quiz-options {
-      margin-top: 4px;
-    }
-
-    .quiz-footer {
-      border-top: 1px dashed #fff;
-      padding-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .quiz-message {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: pre-wrap;
-    }
-
-    .facts-text {
-      font-size: 13px;
-      white-space: pre-wrap;
-    }
+    /* overlays removed (tests + facts view) */
 
     .modal-backdrop {
       position: fixed;
@@ -1835,23 +1756,38 @@ body {
 
 .sh-topbar{
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* ПОИСК (слева) шире, ПУТЬ (справа) компактнее */
+  grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
   border: 1px solid #ffffff;
   border-radius: 10px;
   background: #050505;
   padding: 10px 12px;
+  overflow: visible;
 }
 
 .topbar-block{
   min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .topbar-search{
   position: relative;
+  z-index: 70;
 }
 
+.topbar-path{
+  position: relative;
+  z-index: 10;
+}
+
+@media (max-width: 900px){
+  .sh-topbar{ grid-template-columns: 1fr; }
+}
 .hierarchy-top-wrapper{
   position: relative;
   border: 1px solid #ffffff;
@@ -2226,8 +2162,918 @@ body.hierarchy-resizing *{
     .sh-app-host .search-item-year{
       color: rgba(0,0,0,0.58) !important;
     }
+
+    /* ------------------------------
+       QUIZ (SMART TESTS)
+    --------------------------------*/
+    .sh-app-host .quiz-setup-grid{
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+      min-height: 360px;
+    }
+    @media (max-width: 920px){
+      .sh-app-host .quiz-setup-grid{
+        grid-template-columns: 1fr;
+      }
+    }
+    .sh-app-host .quiz-types{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sh-app-host .quiz-types button{
+      flex: 1 1 auto;
+      min-width: 140px;
+    }
+    .sh-app-host .quiz-setup-opts{
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sh-app-host .quiz-check{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      user-select: none;
+    }
+    .sh-app-host .quiz-row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sh-app-host .quiz-row-label{
+      font-size: 11px;
+      opacity: 0.75;
+      white-space: nowrap;
+    }
+    .sh-app-host .quiz-pattern-list{
+      margin-top: 10px;
+      border: 1px solid var(--line2);
+      background: var(--wash);
+      max-height: 320px;
+      overflow: auto;
+      padding: 8px;
+    }
+    .sh-app-host .quiz-pattern-item{
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .sh-app-host .quiz-pattern-item:hover{
+      border-color: var(--line2);
+      background: rgba(0,0,0,0.03);
+    }
+    .sh-app-host .quiz-pattern-left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .sh-app-host .quiz-pattern-name{
+      font-size: 12px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sh-app-host .quiz-pattern-meta{
+      font-size: 10px;
+      opacity: 0.65;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    .sh-app-host .quiz-card{
+      border: 1px solid var(--line2);
+      background: var(--wash);
+      padding: 14px;
+    }
+    .sh-app-host .quiz-question{
+      font-size: 12px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .sh-app-host .quiz-prompt{
+      font-size: 14px;
+      line-height: 1.45;
+      padding: 10px;
+      border: 1px dashed var(--line2);
+      background: rgba(255,255,255,0.6);
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .sh-app-host .quiz-choices{
+      display: grid;
+      gap: 8px;
+    }
+    .sh-app-host .quiz-choice{
+      text-align: left;
+      padding: 10px 10px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.72);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .sh-app-host .quiz-choice:hover{
+      background: rgba(0,0,0,0.03);
+    }
+    .sh-app-host .quiz-choice[disabled]{
+      cursor: default;
+      opacity: 0.9;
+    }
+    .sh-app-host .quiz-choice.correct{
+      outline: 2px solid rgba(16,185,129,0.55);
+      border-color: rgba(16,185,129,0.55);
+      background: rgba(16,185,129,0.08);
+    }
+    .sh-app-host .quiz-choice.wrong{
+      outline: 2px solid rgba(239,68,68,0.45);
+      border-color: rgba(239,68,68,0.45);
+      background: rgba(239,68,68,0.08);
+    }
+    .sh-app-host .quiz-message{
+      margin-top: 10px;
+      border-top: 1px dashed var(--line2);
+      padding-top: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .sh-app-host .quiz-meta{
+      margin-top: 10px;
+      font-size: 11px;
+      opacity: 0.72;
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sh-app-host .quiz-footer{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sh-app-host .quiz-modal-card{
+      width: min(740px, 92vw);
+    }
+
+    .sh-app-host .modal-backdrop{
+      z-index: 9999 !important;
+    }
 </style>
-</head>
+
+  <!-- === FIXES (2025-12-24): цвет "ОТСЕК" + один нормальный скролл страницы === -->
+  <style>
+    /* 1) Цвет метки "ОТСЕК" (и в списке и в легенде) — было белое по белому на light-skin */
+    .sh-app-host .legend-badge-cell{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.18) !important;
+    }
+    .sh-app-host .legend-badge-patt{
+      color: rgba(0,0,0,0.72) !important;
+      border-color: rgba(0,0,0,0.18) !important;
+      background: rgba(255,255,255,0.72) !important;
+    }
+
+    /* метки в самой иерархии */
+    .sh-app-host .hier-row-category .hier-tag{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.18) !important;
+    }
+    .sh-app-host .hier-row-characteristic .hier-tag{
+      background: rgba(255,255,255,0.86) !important;
+      color: rgba(0,0,0,0.62) !important;
+      border-color: rgba(0,0,0,0.18) !important;
+    }
+
+    /* 2) Нормальный скролл: один скролл страницы, без "доп. окна" в характеристиках */
+    html, body{
+      height: auto !important;
+      min-height: 100% !important;
+    }
+    body.page-student-helper{
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+
+    /* хост приложения должен быть "в потоке" и расти по контенту */
+    .sh-app-host{
+      height: auto !important;
+      min-height: 620px;
+      overflow: visible !important; /* чтобы не появлялись внутренние ловушки скролла */
+    }
+
+    /* экраны внутри хоста — больше не absolute (иначе хост не растёт по высоте) */
+    .sh-app-host .screen{
+      position: relative !important;
+      inset: auto !important;
+    }
+    .sh-app-host .screen-inner{
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    /* убираем внутренний скролл с "характеристик" — пусть растёт и скроллится страницей */
+    #detailsRoot{
+      overflow: visible !important;
+      padding-right: 0 !important;
+    }
+
+    /* снимаем принудительный flex-рост, который делал внутренний скролл */
+    #appRoot.app-vertical{
+      height: auto !important;
+      min-height: 0 !important;
+    }
+    #appRoot.app-vertical > .main-panel{
+      flex: 0 0 auto !important;
+      min-height: auto !important;
+      height: auto !important;
+    }
+
+    /* иерархию оставляем компактной, но БЕЗ "второго скролла", когда контента мало */
+    .hierarchy-top-wrapper{
+      overflow: visible; /* базово */
+    }
+    @media (max-width: 680px){
+      .sh-app-host{ min-height: 560px; }
+    }
+  </style>
+
+
+  <!-- === UI POLISH (2025-12-24): готика + аккуратная верстка, без поломки логики === -->
+  <style>
+    /* ------------------------------
+       GLOBAL PAGE (Item Key frame)
+    --------------------------------*/
+    body.page-student-helper{
+      --paper: #ffffff;
+      --ink: rgba(0,0,0,0.86);
+      --ink2: rgba(0,0,0,0.72);
+      --muted: rgba(0,0,0,0.55);
+      --line: rgba(0,0,0,0.18);
+      --line2: rgba(0,0,0,0.12);
+      --wash: rgba(0,0,0,0.045);
+      --wash2: rgba(0,0,0,0.075);
+      --shadow: 0 18px 48px rgba(0,0,0,0.10);
+      background: var(--paper) !important;
+      color: var(--ink) !important;
+      line-height: 1.45;
+    }
+
+    /* аккуратный центр + одинаковые отступы */
+    .page-student-helper .center-stage{
+      padding-top: 96px;
+      padding-bottom: 72px;
+    }
+
+    .page-student-helper .helper-hub{
+      gap: 18px;
+    }
+
+    .page-student-helper .helper-title{
+      padding: 10px 0 4px;
+    }
+
+    .page-student-helper .helper-title h1{
+      font-size: clamp(14px, 1.25vw, 18px);
+      letter-spacing: 0.42em;
+      line-height: 1.25;
+    }
+
+    .page-student-helper .helper-title .sub{
+      margin-top: 8px;
+      letter-spacing: 0.30em;
+      color: var(--muted);
+    }
+
+    /* ------------------------------
+       APP HOST (обёртка приложения)
+    --------------------------------*/
+    .page-student-helper .sh-app-host{
+      border: 1px solid var(--line) !important;
+      background: rgba(255,255,255,0.92) !important;
+      box-shadow: var(--shadow);
+      border-radius: 0 !important;      /* готика — острые углы */
+      overflow: visible !important;     /* один нормальный скролл страницы */
+    }
+
+    /* лёгкие "угловые метки" (готика, но не крикливо) */
+    .page-student-helper .sh-app-host::before{
+      content: "";
+      position: absolute;
+      inset: 10px;
+      pointer-events: none;
+      opacity: 0.35;
+      background:
+        linear-gradient(var(--ink) 0 0) left top/18px 1px no-repeat,
+        linear-gradient(var(--ink) 0 0) left top/1px 18px no-repeat,
+        linear-gradient(var(--ink) 0 0) right top/18px 1px no-repeat,
+        linear-gradient(var(--ink) 0 0) right top/1px 18px no-repeat,
+        linear-gradient(var(--ink) 0 0) left bottom/18px 1px no-repeat,
+        linear-gradient(var(--ink) 0 0) left bottom/1px 18px no-repeat,
+        linear-gradient(var(--ink) 0 0) right bottom/18px 1px no-repeat,
+        linear-gradient(var(--ink) 0 0) right bottom/1px 18px no-repeat;
+      mix-blend-mode: multiply;
+    }
+
+    /* ------------------------------
+       APP LAYOUT: делаем читабельнее
+    --------------------------------*/
+    /* снимаем "приложение = 100% высоты" и фиксированную высоту ИЕРАРХИИ:
+       пусть блоки растут по контенту, а скролл — один (страницы) */
+    #appRoot.app-vertical{
+      height: auto !important;
+      min-height: 0 !important;
+      gap: 14px !important;
+    }
+
+    .hierarchy-top-wrapper{
+      flex: 0 0 auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 12px 14px !important;
+      border-radius: 0 !important;
+    }
+
+    /* если ты захочешь вернуть "ручную высоту" — просто убери display:none */
+    .hier-resize-handle{ display: none !important; }
+
+    .sh-topbar{
+      border-radius: 0 !important;
+      padding: 12px 14px !important;
+      grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.65fr) !important;
+      gap: 14px !important;
+    }
+
+    @media (max-width: 960px){
+      .sh-topbar{
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    .topbar-block{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #breadcrumb{
+      padding: 8px 10px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.74);
+      border-radius: 0;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* заголовки в приложении */
+    .hier-title,
+    .sidebar-breadcrumb-label{
+      font-size: 10px !important;
+      letter-spacing: 0.22em !important;
+      color: var(--ink2) !important;
+    }
+
+    .main-header-line{
+      align-items: center !important;
+      gap: 12px;
+      padding-bottom: 10px !important;
+      margin-bottom: 14px !important;
+      border-bottom-color: var(--line) !important;
+    }
+
+    .main-title-wrapper{
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    #headerActions{
+      align-items: center;
+      gap: 8px !important;
+      flex-wrap: wrap;
+    }
+
+    /* ------------------------------
+       BUTTONS / INPUTS (единый стиль)
+    --------------------------------*/
+    .sh-app-host .btn,
+    .sh-app-host .hier-fx-btn,
+    .sh-app-host .brain-menu-btn,
+    .sh-app-host .search-sug-chip{
+      border-radius: 0 !important;
+      border-width: 1px !important;
+      padding: 7px 12px !important;
+      min-height: 32px;
+      line-height: 1;
+      transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+
+    .sh-app-host .btn:hover,
+    .sh-app-host .hier-fx-btn:hover{
+      background: var(--wash) !important;
+      transform: translateY(-1px);
+    }
+
+    .sh-app-host .btn:active,
+    .sh-app-host .hier-fx-btn:active{
+      transform: translateY(0px);
+      background: var(--wash2) !important;
+    }
+
+    .sh-app-host .btn-primary{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.20) !important;
+    }
+    .sh-app-host .btn-primary:hover{
+      background: rgba(0,0,0,0.78) !important;
+    }
+
+    .sh-app-host .btn-danger{
+      border-color: rgba(140, 18, 56, 0.55) !important;
+      color: rgba(140, 18, 56, 0.95) !important;
+      background: rgba(140, 18, 56, 0.06) !important;
+    }
+    .sh-app-host .btn-danger:hover{
+      background: rgba(140, 18, 56, 0.10) !important;
+      border-color: rgba(140, 18, 56, 0.70) !important;
+    }
+
+    .sh-app-host .form-input,
+    .sh-app-host .form-select,
+    .sh-app-host .form-textarea{
+      border-radius: 0 !important;
+      padding: 8px 10px !important;
+      border-color: var(--line) !important;
+      background: rgba(255,255,255,0.92) !important;
+      color: var(--ink) !important;
+      transition: box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+
+    .sh-app-host .form-input:focus,
+    .sh-app-host .form-select:focus,
+    .sh-app-host .form-textarea:focus{
+      outline: none;
+      border-color: rgba(0,0,0,0.28) !important;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.10);
+    }
+
+    .sh-app-host .form-label{
+      color: var(--muted) !important;
+      letter-spacing: 0.20em !important;
+    }
+
+    /* ------------------------------
+       PANELS / SECTIONS
+    --------------------------------*/
+    .sh-app-host .section,
+    .sh-app-host .sidebar-tree-wrapper,
+    .sh-app-host .search-section,
+    .sh-app-host .overlay-card,
+    .sh-app-host .modal-card{
+      border-radius: 0 !important;
+      border-color: var(--line) !important;
+      box-shadow: none;
+    }
+
+    .sh-app-host .section{
+      padding: 10px 12px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .sh-app-host .section-header{
+      gap: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--line2);
+    }
+
+    .sh-app-host .section-body{
+      margin-top: 10px !important;
+      line-height: 1.55;
+    }
+
+    .sh-app-host .child-card{
+      border-color: var(--line) !important;
+      border-radius: 0 !important;
+      padding: 8px 10px !important;
+    }
+
+    /* ------------------------------
+       SEARCH: выравнивание и читабельность
+    --------------------------------*/
+    .sh-app-host .sidebar-search-results{
+      border-radius: 0 !important;
+      padding: 8px !important;
+    }
+
+    .sh-app-host .search-section-header{
+      padding: 10px 12px !important;
+    }
+
+    .sh-app-host .search-item{
+      padding: 10px 10px !important;
+      border-radius: 0 !important;
+      border: 1px solid transparent;
+    }
+
+    .sh-app-host .search-item:hover{
+      border-color: var(--line2);
+      background: var(--wash) !important;
+    }
+
+    /* ------------------------------
+       OVERLAYS / MODALS: центр и воздух
+    --------------------------------*/
+    .sh-app-host .overlay-card{
+      padding: 18px 18px 14px !important;
+      gap: 12px !important;
+    }
+
+    .sh-app-host .modal-card{
+      padding: 16px 16px 14px !important;
+      gap: 10px !important;
+    }
+
+    .sh-app-host .overlay-header,
+    .sh-app-host .quiz-footer{
+      border-color: var(--line2) !important;
+    }
+  
+
+    
+</style>
+
+
+  <!-- === FIX (2025-12-24): тесты были "белое по белому" после перехода на светлую тему === -->
+  <style>
+    /* Ключевая причина: базовые стили тестов были рассчитаны на чёрный фон (#000),
+       а в light-skin кнопки/текст сливались с белой карточкой оверлея. */
+
+    /* Заголовки/текст теста */
+    .sh-app-host .overlay-title,
+    .sh-app-host .quiz-question,
+    .sh-app-host .facts-text{
+      color: rgba(0,0,0,0.90) !important;
+    }
+    .sh-app-host .overlay-progress,
+    .sh-app-host .overlay-subtitle,
+    .sh-app-host .quiz-message{
+      color: rgba(0,0,0,0.62) !important;
+    }
+
+    /* Варианты ответа (основная проблема видимости) */
+    .sh-app-host .btn.btn-option{
+      background: rgba(255,255,255,0.96) !important;
+      color: rgba(0,0,0,0.88) !important;
+      border-color: rgba(0,0,0,0.22) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+    }
+    .sh-app-host .btn.btn-option:hover{
+      background: rgba(0,0,0,0.045) !important;
+      border-color: rgba(0,0,0,0.32) !important;
+      transform: translateY(-1px);
+    }
+    .sh-app-host .btn-option-selected{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.30) !important;
+    }
+
+    /* Правильно/неправильно — держим контраст на белом фоне */
+    .sh-app-host .btn-option-correct{
+      background: rgba(22, 126, 61, 0.96) !important;
+      border-color: rgba(22, 126, 61, 0.70) !important;
+      color: #ffffff !important;
+    }
+    .sh-app-host .btn-option-wrong{
+      background: rgba(143, 18, 56, 0.92) !important;
+      border-color: rgba(143, 18, 56, 0.70) !important;
+      color: #ffffff !important;
+    }
+
+    /* Оверлей/карточка теста: принудительно тёмный слой (чтобы текст не терялся на белых фонах Item Key) */
+    .sh-app-host .overlay{
+      background: rgba(0,0,0,0.92) !important;
+      z-index: 9999 !important;
+    }
+    .sh-app-host .overlay-card{
+      background: #000000 !important;
+      color: #ffffff !important;
+      border-color: rgba(255,255,255,0.55) !important;
+      box-shadow: 0 22px 60px rgba(0,0,0,0.55);
+    }
+    .sh-app-host .overlay-title,
+    .sh-app-host .quiz-question,
+    .sh-app-host .quiz-message,
+    .sh-app-host .facts-text{
+      color: #ffffff !important;
+    }
+    .sh-app-host .overlay-subtitle,
+    .sh-app-host .overlay-progress{
+      color: rgba(255,255,255,0.70) !important;
+    }
+    .sh-app-host .overlay-header,
+    .sh-app-host .quiz-footer{
+      border-color: rgba(255,255,255,0.28) !important;
+    }
+    /* FIX (2025-12-24): тест мог выглядеть "пустым" из‑за конфликта стилей с Item Key
+       (иногда .overlay-header/контейнеры растягивались и перекрывали body+footer).
+       Жёстко закрепляем раскладку оверлея внутри .sh-app-host. */
+    .sh-app-host .overlay-card{
+      display:flex !important;
+      flex-direction:column !important;
+      align-items:stretch !important;
+    }
+    .sh-app-host .overlay-header{
+      position:relative !important;
+      inset:auto !important;
+      height:auto !important;
+      display:flex !important;
+    }
+    .sh-app-host .overlay-body{
+      position:relative !important;
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow: auto !important;
+      display:block !important;
+    }
+    .sh-app-host .quiz-footer{
+      position:relative !important;
+      inset:auto !important;
+      height:auto !important;
+      display:flex !important;
+    }
+</style>
+
+
+  <!-- === PATH UI (2025-12-24): Windows-like breadcrumb + stable search dropdown === -->
+  <style>
+    /* breadcrumb as "address bar" (Windows Explorer vibe) */
+    .sh-app-host .sh-topbar{ overflow: visible !important; }
+    .sh-app-host .topbar-search{ position: relative; z-index: 70; }
+    .sh-app-host .sidebar-search-results{ z-index: 80; }
+
+    #breadcrumb{
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      text-transform: none !important;
+      letter-spacing: 0.06em !important;
+      word-break: normal !important;
+      max-width: 100%;
+      scrollbar-width: thin;
+      scroll-behavior: smooth;
+    }
+
+    #breadcrumb::-webkit-scrollbar{ height: 8px; }
+    #breadcrumb::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.18); }
+    #breadcrumb::-webkit-scrollbar-track{ background: rgba(0,0,0,0.06); }
+
+    #breadcrumb .breadcrumb-item{
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.86);
+      color: rgba(0,0,0,0.86);
+      cursor: pointer;
+      user-select: none;
+    }
+    #breadcrumb .breadcrumb-item:hover{
+      background: rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.18);
+    }
+    #breadcrumb .breadcrumb-item:active{
+      background: rgba(0,0,0,0.08);
+    }
+
+    #breadcrumb .breadcrumb-item-current{
+      cursor: default;
+      background: rgba(0,0,0,0.86);
+      color: #ffffff;
+      border-color: rgba(0,0,0,0.20);
+    }
+
+    #breadcrumb .breadcrumb-sep{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      color: rgba(0,0,0,0.42);
+      user-select: none;
+    }
+
+    /* search dropdown: always below the input and not clipped */
+    .topbar-search .sidebar-search-results{
+      top: calc(100% + 6px);
+    }
+  </style>
+
+    <!-- === TOPBAR (2025-12-25 v6): сетка заново — ПОИСК слева шире, КАТЕГОРИИ справа компактнее, высота 1:1, острые рамки === -->
+  <style>
+    .sh-app-host .sh-topbar{
+      --tbControlH: 56px;
+      --tbLabelH: 14px;
+      --tbGap: 8px;
+
+      display: grid !important;
+      grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.65fr) !important;
+      gap: 14px !important;
+      align-items: stretch !important;
+
+      padding: 12px 14px !important;
+      border: 1px solid var(--line2, rgba(0,0,0,0.55)) !important;
+      background: var(--paper, rgba(255,255,255,0.85)) !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    .sh-app-host .sh-topbar .topbar-block{
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--tbGap);
+      justify-content: flex-start;
+      align-self: stretch;
+    }
+
+    .sh-app-host .sh-topbar .sidebar-breadcrumb-label{
+      height: var(--tbLabelH);
+      line-height: var(--tbLabelH);
+      white-space: nowrap;
+      font-size: 10px !important;
+      letter-spacing: 0.22em !important;
+      text-transform: uppercase;
+      color: var(--ink2, rgba(0,0,0,0.65)) !important;
+    }
+
+    /* ПОИСК */
+    .sh-app-host .sh-topbar .topbar-search{ position: relative; z-index: 70; }
+    .sh-app-host .sh-topbar .searchbox{
+      position: relative;
+      height: var(--tbControlH);
+      min-height: var(--tbControlH);
+      border: 1px solid var(--line2, rgba(0,0,0,0.55)) !important;
+      background: var(--paper, rgba(255,255,255,0.92)) !important;
+      border-radius: 0 !important;
+      display: flex;
+      align-items: center;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .sh-app-host .sh-topbar .sidebar-search-input{
+      height: 100% !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      padding: 0 44px 0 12px !important;
+      line-height: 1.1;
+    }
+
+    .sh-app-host .sidebar-search-results{ border-radius: 0 !important; }
+    .sh-app-host .sh-topbar .searchbox-clear{
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 0 !important;
+    }
+
+    /* КАТЕГОРИИ / ПУТЬ */
+    .sh-app-host .sh-topbar .topbar-path{ position: relative; z-index: 10; }
+    .sh-app-host .sh-topbar #breadcrumb{
+            margin: 0 !important;
+height: var(--tbControlH);
+      min-height: var(--tbControlH);
+      border: 1px solid var(--line2, rgba(0,0,0,0.55)) !important;
+      background: var(--paper, rgba(255,255,255,0.92)) !important;
+      border-radius: 0 !important;
+
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+
+      padding: 6px 8px;
+      box-sizing: border-box;
+
+      scrollbar-gutter: stable both-edges;
+      scrollbar-width: thin;
+      scroll-behavior: smooth;
+    }
+    .sh-app-host .sh-topbar #breadcrumb::-webkit-scrollbar{ height: 10px; }
+    .sh-app-host .sh-topbar #breadcrumb::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.22); }
+    .sh-app-host .sh-topbar #breadcrumb::-webkit-scrollbar-track{ background: rgba(0,0,0,0.08); }
+
+    /* острые углы у сегментов */
+    .sh-app-host #breadcrumb .breadcrumb-item,
+    .sh-app-host #breadcrumb .breadcrumb-item-current{
+      border-radius: 0 !important;
+      min-height: 30px;
+      padding: 6px 10px;
+    }
+    .sh-app-host #breadcrumb .breadcrumb-sep{ border-radius: 0 !important; }
+
+    @media (max-width: 960px){
+      .sh-app-host .sh-topbar{ grid-template-columns: 1fr !important; }
+    }
+  </style>
+<!-- === FIX (2025-12-25): hover = чёрный фон + белый текст (без "чёрного на чёрном") === -->
+  <style>
+    /* Если где-то ховер делает фон тёмным, принудительно держим белый текст */
+    .sh-app-host .btn:hover,
+    .sh-app-host .hier-fx-btn:hover,
+    .sh-app-host .brain-menu-btn:hover,
+    .sh-app-host .search-sug-chip:hover,
+    .sh-app-host .searchbox-clear:hover,
+    .sh-app-host .segmented button:hover,
+    .sh-app-host .modal-close:hover,
+    .sh-app-host button.btn:hover{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.22) !important;
+    }
+
+    /* чтобы не ломать первичную "тёмную" кнопку: остаётся белой на чёрном */
+    .sh-app-host .btn-primary:hover{
+      background: rgba(0,0,0,0.78) !important;
+      color: #ffffff !important;
+    }
+  </style>
+
+
+  <!-- === FIX v2 (2025-12-25): дочерние карточки/кнопки и активный хлебный путь === -->
+  <style>
+    /* 1) "Содержимое категории" — child-card становится тёмным и текст белым */
+    .sh-app-host .child-card:hover,
+    .sh-app-host .child-card:hover *{
+      color: #ffffff !important;
+    }
+    .sh-app-host .child-card:hover{
+      background: rgba(0,0,0,0.86) !important;
+      border-color: rgba(0,0,0,0.22) !important;
+    }
+
+    /* 2) Активный элемент в хлебных крошках не должен светлеть на hover */
+    #breadcrumb .breadcrumb-item-current:hover{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+      border-color: rgba(0,0,0,0.20) !important;
+    }
+  </style>
+
+
+  <!-- === FIX v3 (2025-12-25): иерархия — инверсия логотипа "отсек" при hover === -->
+  <style>
+    /* Общий hover строки отсека */
+    .sh-app-host .hier-row:hover{
+      background: rgba(0,0,0,0.86) !important;
+      color: #ffffff !important;
+    }
+
+    /* Лого "отсек": по умолчанию как есть */
+    .sh-app-host .hier-row .hier-badge{
+      background: rgba(0,0,0,0.86);
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    /* При hover строки — инверсия бейджа */
+    .sh-app-host .hier-row:hover .hier-badge{
+      background: #ffffff !important;
+      color: #000000 !important;
+      border-color: rgba(0,0,0,0.35) !important;
+    }
+  </style>
+
+
+  </head>
 <body class="page page-student-helper">
 
   <div class="outer-frame" aria-hidden="true"></div>
@@ -2281,12 +3127,13 @@ body.hierarchy-resizing *{
 <div id="appRoot" class="app-vertical">
   <!-- TOP: breadcrumb + global search -->
   <header class="sh-topbar">
-    <div class="topbar-block">
+    <div class="topbar-block topbar-path">
       <div class="sidebar-breadcrumb-label">КАТЕГОРИИ</div>
       <div id="breadcrumb"></div>
     </div>
 
     <div class="topbar-block topbar-search">
+      <div class="sidebar-breadcrumb-label">ПОИСК</div>
       <div class="searchbox" id="globalSearchBox">
         <input
           type="search"
@@ -2349,61 +3196,10 @@ body.hierarchy-resizing *{
       <button class="btn btn-sm btn-primary" id="brainStoryClose">вернуться</button>
     </div>
   </div>
-  <!-- QUIZ OVERLAY -->
-  <div class="overlay" id="quizScreen">
-    <div class="overlay-card">
-      <div class="overlay-header">
-        <div class="overlay-title-block">
-          <div class="overlay-title" id="quizHeaderTitle"></div>
-          <div class="overlay-subtitle" id="quizProgress"></div>
-        </div>
-        <div class="overlay-progress">
-          Режим теста: фокус — только вопрос и ответы.
-        </div>
-      </div>
-      <div class="overlay-body">
-        <div class="quiz-question" id="quizQuestion"></div>
-        <div class="quiz-options" id="quizOptions"></div>
-      </div>
-      <div class="quiz-footer">
-        <div class="quiz-message" id="quizMessage"></div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm btn-ghost" id="btnQuizRestart">ЗАНОВО</button>
-          <button class="btn btn-sm btn-ghost" id="btnQuizClarify">УТОЧНИТЬ</button>
-          <button class="btn btn-sm btn-ghost btn-hidden" id="btnQuizNext">Дальше</button>
-          <button class="btn btn-sm btn-danger" id="btnQuizExit">Выйти</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  
+  <!-- overlays removed -->
 
-  <!-- FACTS OVERLAY -->
-  <div class="overlay" id="factsScreen">
-    <div class="overlay-card">
-      <div class="overlay-header">
-        <div class="overlay-title-block">
-          <div class="overlay-title facts" id="factsHeaderTitle"></div>
-          <div class="overlay-subtitle" id="factsProgress"></div>
-        </div>
-        <div class="overlay-progress" id="factsCount"></div>
-      </div>
-      <div class="overlay-body">
-        <div class="facts-text" id="factsText"></div>
-      </div>
-      <div class="quiz-footer">
-        <div class="facts-footer-left">
-          <span>Просмотр фактов без отвлекающих элементов.</span>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm btn-ghost" id="btnFactPrev">← Назад</button>
-          <button class="btn btn-sm btn-ghost" id="btnFactNext">Вперёд →</button>
-          <button class="btn btn-sm btn-danger" id="btnFactsClose">Закрыть</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CREATE MODAL -->
+<!-- CREATE MODAL -->
   <div class="modal-backdrop" id="createModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -2472,6 +3268,123 @@ body.hierarchy-resizing *{
         <button class="btn btn-sm btn-ghost" id="btnCreateCancel">Отмена</button>
         <button class="btn btn-sm btn-primary" id="btnCreateConfirm">Создать</button>
       </div>
+    </div>
+  </div>
+
+  <!-- QUIZ SETUP MODAL -->
+  <div class="modal-backdrop" id="quizSetupModal" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="quizSetupTitle">ТЕСТЫ</div>
+            <div class="modal-subtitle" id="quizSetupSubtitle">Настройка</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" id="btnQuizSetupClose">Закрыть</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="quiz-setup-grid">
+            <div class="quiz-setup-left">
+              <div class="seg-title">Типы</div>
+              <div class="segmented quiz-types" id="quizTypeSeg">
+                <button type="button" data-qtype="assertion">ФАКТЫ</button>
+                <button type="button" data-qtype="years">ГОДА</button>
+                <button type="button" data-qtype="olist">ОБЪЕКТНЫЕ СПИСКИ</button>
+                <button type="button" data-qtype="term">СЛОВА-ОПРЕДЕЛЕНИЯ</button>
+                <button type="button" data-qtype="mix">СБОРНАЯ СОЛЯНКА</button>
+              </div>
+
+              <div class="quiz-setup-opts">
+                <label class="quiz-check">
+                  <input type="checkbox" id="chkQuizIncludeSub" checked />
+                  <span>Учитывать подотсеки (цепочка)</span>
+                </label>
+
+                <div class="quiz-row">
+                  <div class="quiz-row-label">Количество вопросов</div>
+                  <input class="form-input" id="quizQuestionLimit" type="number" min="5" max="200" step="5" value="20" />
+                </div>
+
+                <div class="quiz-row">
+                  <div class="quiz-row-label">Режим</div>
+                  <div class="segmented" id="quizModeSeg">
+                    <button type="button" data-mode="smart">умный</button>
+                    <button type="button" data-mode="ordered">по порядку</button>
+                  </div>
+                </div>
+
+                <div class="quiz-row">
+                  <div class="quiz-row-label">Направление (для годов/терминов)</div>
+                  <div class="segmented" id="quizDirectionSeg">
+                    <button type="button" data-dir="auto">авто</button>
+                    <button type="button" data-dir="forward">вопрос → ответ</button>
+                    <button type="button" data-dir="reverse">ответ → вопрос</button>
+                  </div>
+                </div>
+
+                <label class="quiz-check">
+                  <input type="checkbox" id="chkQuizShowExplain" checked />
+                  <span>Показывать «почему» после ответа</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="quiz-setup-right">
+              <div class="seg-title">Какие паттерны участвуют</div>
+              <div class="quiz-row" style="margin-top:8px;">
+                <input class="form-input" id="quizPatternFilter" type="search" placeholder="Фильтр по названию паттерна..." />
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn btn-sm btn-ghost" id="btnQuizSelectAll">Все</button>
+                  <button type="button" class="btn btn-sm btn-ghost" id="btnQuizClearAll">Ничего</button>
+                </div>
+              </div>
+
+              <div class="quiz-pattern-list" id="quizPatternList"></div>
+
+              <div class="hint" id="quizSetupHint" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer quiz-setup-footer">
+          <button class="btn btn-sm btn-ghost" id="btnQuizSetupCancel">Отмена</button>
+          <button class="btn btn-sm btn-primary" id="btnQuizStart">Начать тест</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ MODAL -->
+  <div class="modal-backdrop" id="quizModal" style="display:none;">
+    <div class="modal-card quiz-modal-card" role="dialog" aria-modal="true">
+      
+        <div class="modal-header">
+          <div style="min-width:0;">
+            <div class="modal-title" id="quizTitle">ТЕСТ</div>
+            <div class="modal-subtitle" id="quizProgress">0/0</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn btn-sm btn-ghost" id="btnQuizExit">Выйти</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <div class="quiz-card">
+            <div class="quiz-question" id="quizQuestionTitle">Вопрос</div>
+            <div class="quiz-prompt" id="quizPromptText"></div>
+            <div class="quiz-choices" id="quizChoices"></div>
+
+            <div class="quiz-message" id="quizMessage" style="display:none;"></div>
+
+            <div class="quiz-meta" id="quizMeta" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer quiz-footer">
+          <button class="btn btn-sm btn-ghost" id="btnQuizPrev">Назад</button>
+          <button class="btn btn-sm btn-primary" id="btnQuizNext">Дальше</button>
+        </div>
     </div>
   </div>
 
@@ -2637,24 +3550,7 @@ body.hierarchy-resizing *{
     const btnImport = document.getElementById('btnImport');
     const fileInput = document.getElementById('fileInput');
 
-    const quizScreenEl = document.getElementById('quizScreen');
-    const quizHeaderTitleEl = document.getElementById('quizHeaderTitle');
-    const quizProgressEl = document.getElementById('quizProgress');
-    const quizQuestionEl = document.getElementById('quizQuestion');
-    const quizOptionsEl = document.getElementById('quizOptions');
-    const quizMessageEl = document.getElementById('quizMessage');
-    const btnQuizExit = document.getElementById('btnQuizExit');
-    const btnQuizRestart = document.getElementById('btnQuizRestart');
-    const btnQuizNext = document.getElementById('btnQuizNext');
-
-    const factsScreenEl = document.getElementById('factsScreen');
-    const factsHeaderTitleEl = document.getElementById('factsHeaderTitle');
-    const factsTextEl = document.getElementById('factsText');
-    const factsProgressEl = document.getElementById('factsProgress');
-    const factsCountEl = document.getElementById('factsCount');
-    const btnFactsClose = document.getElementById('btnFactsClose');
-    const btnFactPrev = document.getElementById('btnFactPrev');
-    const btnFactNext = document.getElementById('btnFactNext');
+        // (quiz / facts overlays removed)
 
     const createModalEl = document.getElementById('createModal');
     const createModalTitleEl = document.getElementById('createModalTitle');
@@ -2852,8 +3748,6 @@ body.hierarchy-resizing *{
 
     let state = loadState();
     let currentNodeId = state.rootId;
-    let quizState = null;
-    let factsState = null;
     let treeExpanded = {};
     let sidebarViewNodeId = state.rootId;
 
@@ -3269,21 +4163,26 @@ function deleteCard(nodeId, cardId) {
         if (!n.parentId) break;
         n = getNode(n.parentId);
       }
+
       breadcrumbEl.innerHTML = '';
+
       path.forEach((node, idx) => {
         if (idx > 0) {
           const sep = document.createElement('span');
-          sep.textContent = '→';
+          sep.textContent = ' \\ ';
           sep.className = 'breadcrumb-sep';
           breadcrumbEl.appendChild(sep);
         }
-        const span = document.createElement('span');
-        span.textContent = node.name || '(без названия)';
-        if (idx < path.length - 1) {
-          span.onclick = () => {
+
+        const seg = document.createElement('span');
+        const isLast = idx === path.length - 1;
+        seg.className = 'breadcrumb-item' + (isLast ? ' breadcrumb-item-current' : '');
+        seg.textContent = node.name || '(без названия)';
+
+        if (!isLast) {
+          seg.title = 'Перейти';
+          seg.onclick = () => {
             currentNodeId = node.id;
-            quizState = null;
-            factsState = null;
             if (node.type === 'category') {
               sidebarViewNodeId = node.id;
             } else if (node.parentId) {
@@ -3292,10 +4191,16 @@ function deleteCard(nodeId, cardId) {
             render();
           };
         } else {
-          span.style.fontWeight = '500';
+          seg.setAttribute('aria-current', 'page');
         }
-        breadcrumbEl.appendChild(span);
+
+        breadcrumbEl.appendChild(seg);
       });
+
+      // как в Windows Explorer: показываем "хвост" пути (последние сегменты)
+      try {
+        breadcrumbEl.scrollLeft = breadcrumbEl.scrollWidth;
+      } catch (e) {}
     }
 
 
@@ -3354,8 +4259,6 @@ function renderTree() {
       if (parent) {
         sidebarViewNodeId = parent.id;
         currentNodeId = parent.id;
-        quizState = null;
-        factsState = null;
         render();
       }
     };
@@ -3408,8 +4311,6 @@ left.appendChild(backBtn);
       e.stopPropagation();
       // Просто показываем характеристику текущего отсека в правой панели
       currentNodeId = viewNode.id;
-      quizState = null;
-      factsState = null;
       render();
     };
   }
@@ -3471,9 +4372,6 @@ left.appendChild(backBtn);
 
     row.onclick = () => {
       currentNodeId = n.id;
-      quizState = null;
-      factsState = null;
-
       if (n.type === 'category') {
         sidebarViewNodeId = n.id; // заходим внутрь выбранного отсека
       }
@@ -3573,8 +4471,6 @@ function attachSectionToggles(wrapper) {
           goCategoryBtn.onclick = () => {
             currentNodeId = parent.id;
             sidebarViewNodeId = parent.id;
-            quizState = null;
-            factsState = null;
             render();
           };
 
@@ -3739,8 +4635,6 @@ function attachSectionToggles(wrapper) {
 
           card.onclick = () => {
             currentNodeId = ch.id;
-            quizState = null;
-            factsState = null;
             if (ch.type === 'category') {
               sidebarViewNodeId = ch.id;
             } else if (ch.parentId) {
@@ -3757,54 +4651,66 @@ function attachSectionToggles(wrapper) {
       secChildren.appendChild(secChBody);
       wrapper.appendChild(secChildren);
 
-      // section: big tests
-      const secTests = document.createElement('div');
-      secTests.className = 'section';
-      const secTestsHeader = document.createElement('div');
-      secTestsHeader.className = 'section-header';
-      secTestsHeader.innerHTML =
-        '<div class="section-title">Тест по отсеку (учитывается всё что внутри)</div>';
-      secTests.appendChild(secTestsHeader);
+            // SECTION: tests (умный режим)
+      const secQuiz = document.createElement('div');
+      secQuiz.className = 'section';
 
-      const secTestsBody = document.createElement('div');
-      secTestsBody.className = 'section-body';
+      const secQuizHeader = document.createElement('div');
+      secQuizHeader.className = 'section-header';
+      secQuizHeader.innerHTML =
+        '<div class="section-title">Тесты по отсеку</div>';
+      secQuiz.appendChild(secQuizHeader);
+
+      const secQuizBody = document.createElement('div');
+      secQuizBody.className = 'section-body';
+
+      const quizRow = document.createElement('div');
+      quizRow.className = 'row';
+      quizRow.style.flexWrap = 'wrap';
+
+      const qStats = computeScopeStats('category', node.id, true);
+
+      function addQuizBtn(type, label, enabled, count){
+        const b = document.createElement('button');
+        b.className = 'btn btn-sm ' + (enabled ? 'btn-primary' : 'btn-ghost');
+        b.type = 'button';
+        b.disabled = !enabled;
+        b.textContent = label + (typeof count === 'number' ? (' · ' + count) : '');
+        b.onclick = () => startQuizQuick('category', node.id, type);
+        quizRow.appendChild(b);
+      }
+
+      addQuizBtn('assertion', 'ФАКТЫ', !!qStats.canStart.assertion, qStats.byType.assertion.cards);
+      addQuizBtn('years', 'ГОДА', !!qStats.canStart.years, qStats.byType.years.cards);
+      addQuizBtn('olist', 'ОБЪЕКТНЫЕ СПИСКИ', !!qStats.canStart.olist, qStats.byType.olist.cards);
+      addQuizBtn('term', 'СЛОВА-ОПРЕДЕЛЕНИЯ', !!qStats.canStart.term, qStats.byType.term.cards);
+
+      const btnMix = document.createElement('button');
+      btnMix.className = 'btn btn-sm ' + (qStats.canMix ? 'btn-primary' : 'btn-ghost');
+      btnMix.type = 'button';
+      btnMix.disabled = !qStats.canMix;
+      btnMix.textContent = 'СБОРНАЯ СОЛЯНКА';
+      btnMix.onclick = () => startQuizQuick('category', node.id, 'mix');
+      quizRow.appendChild(btnMix);
+
+      const btnCfg = document.createElement('button');
+      btnCfg.className = 'btn btn-sm btn-ghost';
+      btnCfg.type = 'button';
+      btnCfg.textContent = '⚙ Настроить';
+      btnCfg.onclick = () => openQuizSetup('category', node.id, ['mix']);
+      quizRow.appendChild(btnCfg);
+
+      secQuizBody.appendChild(quizRow);
+
       const hint = document.createElement('div');
       hint.className = 'hint';
-      hint.textContent =
-        'Берётся всё, что находится внутри этого отсека и его подотсеков. Кнопка становится активной, когда есть данные.';
-      secTestsBody.appendChild(hint);
+      hint.textContent = 'Тесты учитывают паттерны внутри отсека и всех его подотсеков. В настройке можно вручную выбрать типы и конкретные паттерны.';
+      secQuizBody.appendChild(hint);
 
-      const btnRow = document.createElement('div');
-      btnRow.className = 'row';
-      const types = [
-        ['assertion', 'УТВЕРЖДЕНИЯ'],
-        ['years', 'ГОДЫ'],
-        ['olist', 'ОБЪЕКТНЫЕ СПИСКИ'],
-        ['term', 'СЛОВА-ОПРЕДЕЛЕНИЯ']
-      ];
-      types.forEach(([type, label]) => {
-        const col = document.createElement('div');
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-sm btn-ghost btn-full';
-        btn.textContent = label;
+      secQuiz.appendChild(secQuizBody);
+      wrapper.appendChild(secQuiz);
 
-        const qs = buildQuestions('category', node.id, type);
-        const hasQuestions = qs && qs.length;
-        if (!hasQuestions) {
-          btn.disabled = true;
-        } else {
-          if (qs.length) {
-            btn.textContent = label + ' · ' + qs.length + ' вопр.';
-          }
-        }
 
-        btn.onclick = () => startCategoryTest(node.id, type);
-        col.appendChild(btn);
-        btnRow.appendChild(col);
-      });
-      secTestsBody.appendChild(btnRow);
-      secTests.appendChild(secTestsBody);
-      wrapper.appendChild(secTests);
 
       detailsRootEl.appendChild(wrapper);
       attachSectionToggles(wrapper);
@@ -3861,8 +4767,6 @@ function attachSectionToggles(wrapper) {
         h1.onclick = () => {
           currentNodeId = parent.id;
           sidebarViewNodeId = parent.id;
-          quizState = null;
-          factsState = null;
           render();
         };
       } else {
@@ -3881,49 +4785,7 @@ function attachSectionToggles(wrapper) {
       secType.appendChild(secTypeBody);
       wrapper.appendChild(secType);
 
-      // SECTION: Воспользоваться паттерном
-      const secUse = document.createElement('div');
-      secUse.className = 'section';
-      const secUseHeader = document.createElement('div');
-      secUseHeader.className = 'section-header';
-      secUseHeader.innerHTML =
-        '<div class="section-title">Воспользоваться паттерном</div>';
-      secUse.appendChild(secUseHeader);
-
-      const secUseBody = document.createElement('div');
-      secUseBody.className = 'section-body';
-
-      const toolbar = document.createElement('div');
-      toolbar.className = 'row-xs';
-
-      const btnViewFacts = document.createElement('button');
-      btnViewFacts.className = 'btn btn-sm btn-ghost';
-      btnViewFacts.textContent = 'КАРТОЧКИ';
-      btnViewFacts.onclick = () => startFactsView(node.id);
-      toolbar.appendChild(btnViewFacts);
-
-      const tests = [
-        ['assertion', 'ТЕСТ: УТВЕРЖДЕНИЯ'],
-        ['years', 'ТЕСТ: ГОДЫ'],
-        ['olist', 'ТЕСТ: СПИСКИ'],
-        ['term', 'ТЕСТ: ТЕРМИНЫ']
-      ];
-      // Показываем только те типы тестов, которые реально можно пройти в этом паттерне.
-      tests.forEach(([t, label]) => {
-        // для паттерна используем его factType — остальные типы игнорируем
-        if (t !== ft) return;
-        const qs = buildQuestions('characteristic', node.id, t);
-        if (!qs || !qs.length) return;
-        const b = document.createElement('button');
-        b.className = 'btn btn-sm btn-ghost btn-chip';
-        b.textContent = label + ' · ' + qs.length + ' вопр.';
-        b.onclick = () => startCharacteristicTest(node.id, t);
-        toolbar.appendChild(b);
-      });
-
-      secUseBody.appendChild(toolbar);
-      secUse.appendChild(secUseBody);
-      wrapper.appendChild(secUse);
+            // (pattern use toolbar removed)
 // SECTION: Добавление факта
       const secAdd = document.createElement('div');
       secAdd.className = 'section';
@@ -4698,473 +5560,1259 @@ function attachSectionToggles(wrapper) {
       secFacts.appendChild(secFactsBody);
       wrapper.appendChild(secFacts);
 
+      // section: tests for pattern
+      const secQuizP = document.createElement('div');
+      secQuizP.className = 'section';
+
+      const secQuizPHeader = document.createElement('div');
+      secQuizPHeader.className = 'section-header';
+      secQuizPHeader.innerHTML =
+        '<div class="section-title">Тесты по паттерну</div>';
+      secQuizP.appendChild(secQuizPHeader);
+
+      const secQuizPBody = document.createElement('div');
+      secQuizPBody.className = 'section-body';
+
+      const pType = node.factType || 'assertion';
+      const pStats = computeScopeStats('characteristic', node.id, false);
+      const pEnabled = !!pStats.canStart[pType];
+
+      const pRow = document.createElement('div');
+      pRow.className = 'row';
+      pRow.style.flexWrap = 'wrap';
+
+      const btnStartP = document.createElement('button');
+      btnStartP.className = 'btn btn-sm ' + (pEnabled ? 'btn-primary' : 'btn-ghost');
+      btnStartP.type = 'button';
+      btnStartP.disabled = !pEnabled;
+      btnStartP.textContent = 'Начать (' + (node.cards ? node.cards.length : 0) + ')';
+      btnStartP.onclick = () => startQuizQuick('characteristic', node.id, pType);
+      pRow.appendChild(btnStartP);
+
+      const btnCfgP = document.createElement('button');
+      btnCfgP.className = 'btn btn-sm btn-ghost';
+      btnCfgP.type = 'button';
+      btnCfgP.textContent = '⚙ Настроить';
+      btnCfgP.onclick = () => openQuizSetup('characteristic', node.id, [pType]);
+      pRow.appendChild(btnCfgP);
+
+      secQuizPBody.appendChild(pRow);
+
+      const hintP = document.createElement('div');
+      hintP.className = 'hint';
+      hintP.textContent = pEnabled
+        ? 'Тест создаётся из фактов внутри этого паттерна. Неправильные ответы подбираются из похожих вариантов + один «несуществующий» ответ.'
+        : 'Для теста нужно хотя бы 3 разных ответа внутри этого паттерна.';
+      secQuizPBody.appendChild(hintP);
+
+      secQuizP.appendChild(secQuizPBody);
+      wrapper.appendChild(secQuizP);
+
       detailsRootEl.appendChild(wrapper);
       attachSectionToggles(wrapper);
     }
 
-    // ===== FACTS OVERLAY =====
+    //     // ===== removed =====
 
-    function startFactsView(nodeId) {
-      const node = getNode(nodeId);
-      if (!node || node.type !== 'characteristic') return;
-      const items = [];
-      (node.cards || []).forEach(c => {
-        items.push({
-          title: node.name || '',
-          text: formatFactDisplay(node, c)
-        });
+    // ===== removed =====
+
+// ===== QUIZ SYSTEM (smart tests) =====
+
+    const quizSetupModalEl = document.getElementById('quizSetupModal');
+    const quizModalEl = document.getElementById('quizModal');
+
+    const quizSetupTitleEl = document.getElementById('quizSetupTitle');
+    const quizSetupSubtitleEl = document.getElementById('quizSetupSubtitle');
+    const btnQuizSetupClose = document.getElementById('btnQuizSetupClose');
+    const btnQuizSetupCancel = document.getElementById('btnQuizSetupCancel');
+    const btnQuizStart = document.getElementById('btnQuizStart');
+
+    const quizTypeSegEl = document.getElementById('quizTypeSeg');
+    const chkQuizIncludeSubEl = document.getElementById('chkQuizIncludeSub');
+    const quizQuestionLimitEl = document.getElementById('quizQuestionLimit');
+    const quizModeSegEl = document.getElementById('quizModeSeg');
+    const quizDirectionSegEl = document.getElementById('quizDirectionSeg');
+    const chkQuizShowExplainEl = document.getElementById('chkQuizShowExplain');
+
+    const quizPatternFilterEl = document.getElementById('quizPatternFilter');
+    const btnQuizSelectAll = document.getElementById('btnQuizSelectAll');
+    const btnQuizClearAll = document.getElementById('btnQuizClearAll');
+    const quizPatternListEl = document.getElementById('quizPatternList');
+    const quizSetupHintEl = document.getElementById('quizSetupHint');
+
+    const quizTitleEl = document.getElementById('quizTitle');
+    const quizProgressEl = document.getElementById('quizProgress');
+    const quizQuestionTitleEl = document.getElementById('quizQuestionTitle');
+    const quizPromptTextEl = document.getElementById('quizPromptText');
+    const quizChoicesEl = document.getElementById('quizChoices');
+    const quizMessageEl = document.getElementById('quizMessage');
+    const quizMetaEl = document.getElementById('quizMeta');
+    const btnQuizExit = document.getElementById('btnQuizExit');
+    const btnQuizPrev = document.getElementById('btnQuizPrev');
+    const btnQuizNext = document.getElementById('btnQuizNext');
+
+    const QUIZ_PREFS_KEY = 'sh-quiz-prefs-v1';
+
+    const QUIZ_LABELS = {
+      assertion: 'ФАКТЫ',
+      years: 'ГОДА',
+      olist: 'ОБЪЕКТНЫЕ СПИСКИ',
+      term: 'СЛОВА-ОПРЕДЕЛЕНИЯ',
+      mix: 'СБОРНАЯ СОЛЯНКА'
+    };
+
+    function loadQuizPrefs(){
+      try{
+        const raw = localStorage.getItem(QUIZ_PREFS_KEY);
+        if(!raw) return null;
+        const obj = JSON.parse(raw);
+        if(!obj || typeof obj !== 'object') return null;
+        return obj;
+      }catch{ return null; }
+    }
+    function saveQuizPrefs(prefs){
+      try{ localStorage.setItem(QUIZ_PREFS_KEY, JSON.stringify(prefs||{})); }catch{}
+    }
+
+    function __uniq(arr){
+      const seen = new Set();
+      const out = [];
+      arr.forEach(v=>{
+        const k = (v ?? '').toString();
+        if(!k) return;
+        if(seen.has(k)) return;
+        seen.add(k);
+        out.push(k);
       });
-
-      factsState = {
-        nodeId,
-        items,
-        currentIndex: 0
-      };
-
-      factsHeaderTitleEl.textContent = 'Факты: ' + (node.name || '');
-      renderFacts();
-      document.getElementById('appRoot').style.display = 'none';
-      factsScreenEl.style.display = 'flex';
+      return out;
     }
 
-    function renderFacts() {
-      if (!factsState) return;
-      const { items, currentIndex } = factsState;
-      const total = items.length;
-      if (!total) return;
-      const item = items[currentIndex];
-      factsTextEl.textContent = item.text || '';
-      factsProgressEl.textContent = 'Факт ' + (currentIndex + 1) + ' из ' + total;
-      factsCountEl.textContent = 'Всего фактов: ' + total;
-      btnFactPrev.disabled = currentIndex === 0;
-      btnFactNext.disabled = currentIndex === total - 1;
-    }
-
-    function exitFacts() {
-      factsState = null;
-      factsScreenEl.style.display = 'none';
-      document.getElementById('appRoot').style.display = 'grid';
-    }
-
-    // ===== QUIZ QUESTION GENERATION =====
-
-    function buildQuestionsForAssertion(scope, scopeId) {
-      let chars = [];
-      if (scope === 'category') {
-        chars = getCategoryCharacteristics(scopeId).filter(
-          ch => (ch.factType || 'assertion') === 'assertion'
-        );
-      } else {
-        const n = getNode(scopeId);
-        if (
-          n &&
-          n.type === 'characteristic' &&
-          (n.factType || 'assertion') === 'assertion'
-        )
-          chars = [n];
+    function __shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
-      const pairs = [];
-      chars.forEach(ch => {
-        (ch.cards || []).forEach(c => pairs.push({ node: ch, card: c }));
-      });
-      if (pairs.length < 2) return [];
-
-      const subjects = [
-        ...new Set(
-          pairs
-            .map(p => p.card.subject || p.node.name)
-            .filter(Boolean)
-        )
-      ];
-      if (subjects.length < 2) return [];
-
-      const questions = [];
-      pairs.forEach(p => {
-        const node = p.node;
-        const card = p.card;
-        const subj = card.subject || node.name || '';
-        const text = card.text || '';
-        if (!subj || !text) return;
-
-        const wrong = pickRandom(subjects, 3, subj);
-        const options = shuffle([subj, ...wrong]).map(o => ({ id: o, text: o }));
-
-        questions.push({
-          type: 'single',
-          testType: 'assertion',
-          questionText:
-            text + '\n\nВыбери пункт, к которому это относится:',
-          options,
-                    sourceNodeId: node.id,
-          correctIds: [subj],
-          correctAnswerText: subj
-        });
-      });
-      return questions;
+      return a;
     }
 
-    function buildQuestionsForYears(scope, scopeId) {
-      let chars = [];
-      if (scope === 'category') {
-        chars = getCategoryCharacteristics(scopeId).filter(
-          ch => (ch.factType || 'assertion') === 'years'
-        );
-      } else {
-        const n = getNode(scopeId);
-        if (
-          n &&
-          n.type === 'characteristic' &&
-          (n.factType || 'assertion') === 'years'
-        )
-          chars = [n];
+    function __commonPrefixLen(a,b){
+      const n = Math.min(a.length,b.length);
+      let i=0;
+      for(; i<n; i++){
+        if(a[i]!==b[i]) break;
       }
-
-      const pairs = [];
-      chars.forEach(ch => {
-        (ch.cards || []).forEach(c => {
-          if (c.timeRaw) pairs.push({ node: ch, card: c });
-        });
-      });
-      if (pairs.length < 2) return [];
-
-      const allTimeLabels = pairs.map(p => formatYears(p.card)).filter(Boolean);
-
-      const questions = [];
-      pairs.forEach(p => {
-        const card = p.card;
-        const label = formatYears(card);
-        if (!label) return;
-        const ev = (card.event || '').trim();
-        const person = (card.person || '').trim();
-        let q;
-        if (person) q = 'Выбери дату/период, который относится к событию:\n' + person + ' — ' + ev;
-        else q = 'Выбери дату/период, который относится к событию:\n' + ev;
-
-        const wrong = pickRandom(allTimeLabels, 3, label);
-        const options = shuffle([label, ...wrong]).map(o => ({ id: o, text: o }));
-
-        questions.push({
-          type: 'single',
-          testType: 'years',
-          questionText: q,
-          options,
-          correctIds: [label],
-          correctAnswerText: label
-        });
-      });
-      return questions;
+      return i;
     }
 
-    function buildQuestionsForOList(scope, scopeId) {
-      let chars = [];
-      if (scope === 'category') {
-        chars = getCategoryCharacteristics(scopeId).filter(
-          ch => (ch.factType || 'assertion') === 'olist'
-        );
-      } else {
-        const n = getNode(scopeId);
-        if (
-          n &&
-          n.type === 'characteristic' &&
-          (n.factType || 'assertion') === 'olist'
-        )
-          chars = [n];
+    function __stemTokenSet(s){
+      const tokens = tokenizeForSearch((s||'').toString());
+      const set = new Set();
+      tokens.forEach(t=>{
+        const st = ruStem(normalizeTextForSearch(t));
+        if(st && st.length>=2) set.add(st);
+      });
+      return set;
+    }
+
+    function __jaccardSet(a,b){
+      let inter = 0;
+      a.forEach(v=>{ if(b.has(v)) inter++; });
+      const union = a.size + b.size - inter;
+      return union ? (inter/union) : 0;
+    }
+
+    function __stringSim(a,b){
+      const A = (a||'').toString().trim();
+      const B = (b||'').toString().trim();
+      if(!A || !B) return 0;
+      const aN = normalizeTextForSearch(A);
+      const bN = normalizeTextForSearch(B);
+      if(aN === bN) return 1.25;
+      // 1) prefix helps for single words
+      let score = 0;
+      const cp = __commonPrefixLen(aN,bN);
+      score += Math.min(0.35, cp * 0.05);
+      // 2) stems/trigrams
+      const aStem = ruStem(aN);
+      const bStem = ruStem(bN);
+      if(aStem && bStem){
+        if(aStem === bStem && aStem.length>=3) score += 0.75;
+        score += jaccard(trigrams(aStem), trigrams(bStem)) * 0.55;
       }
-
-      const lists = chars
-        .map(ch => ({ node: ch, cards: ch.cards || [] }))
-        .filter(x => x.cards.length);
-      if (!lists.length) return [];
-
-      const allItems = [];
-      lists.forEach(({ node, cards }) => {
-        cards.forEach(c => allItems.push({ node, card: c }));
-      });
-
-      const questions = [];
-      lists.forEach(({ node, cards }) => {
-        if (!cards.length) return;
-        const topic = node.name || 'Список';
-
-        const correctOptions = cards.map(c => ({
-          id: c.id,
-          text: c.text || ''
-        }));
-
-        const wrongPool = allItems.filter(it => it.node.id !== node.id);
-        const wrongOptions = shuffle(wrongPool)
-          .slice(0, Math.max(2, correctOptions.length))
-          .map(it => ({
-            id: it.card.id + '_wrong_' + it.node.id,
-            text: it.card.text || ''
-          }));
-
-        const options = shuffle([...correctOptions, ...wrongOptions]);
-        const correctIds = correctOptions.map(o => o.id);
-
-        questions.push({
-          type: 'multi',
-          testType: 'olist',
-          questionText:
-            'Выбери ВСЕ пункты, относящиеся к теме:\n«' + topic + '»',
-          options,
-          correctIds,
-          correctAnswerText: correctOptions.map(o => o.text).join('\n')
-        });
-      });
-
-      return questions;
+      // 3) token overlap for phrases
+      const sa = __stemTokenSet(aN);
+      const sb = __stemTokenSet(bN);
+      score += __jaccardSet(sa,sb) * 0.75;
+      return score;
     }
 
-    function buildQuestionsForTerm(scope, scopeId) {
-      let chars = [];
-      if (scope === 'category') {
-        chars = getCategoryCharacteristics(scopeId).filter(
-          ch => (ch.factType || 'assertion') === 'term'
-        );
-      } else {
-        const n = getNode(scopeId);
-        if (
-          n &&
-          n.type === 'characteristic' &&
-          (n.factType || 'assertion') === 'term'
-        )
-          chars = [n];
+    function __parseFirstYear(s){
+      const m = ((s||'')+'').match(/(-?\d{1,4})/);
+      if(!m) return null;
+      const n = parseInt(m[1],10);
+      if(Number.isNaN(n)) return null;
+      return n;
+    }
+
+    function __formatYearsAnswer(card){
+      let t = (card && card.timeRaw ? (card.timeRaw+'').trim() : '');
+      let era = (card && card.era ? (card.era+'').trim() : '');
+      let exact = (card && card.timeExact ? (card.timeExact+'').trim() : '');
+      let out = t;
+      if(era) out = out ? (out + ' ' + era) : era;
+      if(exact) out = exact + (out ? (' · ' + out) : '');
+      return (out || '').trim();
+    }
+
+    function __formatYearsEvent(card){
+      const ev = (card && card.event ? (card.event+'').trim() : '');
+      const who = (card && card.person ? (card.person+'').trim() : '');
+      if(who && ev) return who + ': ' + ev;
+      return ev || who || '(событие)';
+    }
+
+    function __extractPair(text){
+      const s = (text||'').toString().trim();
+      if(!s) return null;
+      // ищем "лево — право" / "лево: право" / "лево -> право"
+      const re = /^(.{2,90}?)(?:\s*(?:—|–|-|:|=>|->|→|=)\s*)(.{2,260})$/;
+      const m = s.match(re);
+      if(!m) return null;
+      const left = (m[1]||'').trim();
+      const right = (m[2]||'').trim();
+      if(!left || !right) return null;
+      // фильтр: если "право" слишком длинное — всё равно ок, но ограничим
+      return { left, right };
+    }
+
+    function __makeFakeAnswer(type, correct, poolAll){
+      const poolSet = new Set(poolAll||[]);
+      const cor = (correct||'').toString();
+      // 1) years: чуть сдвинем число
+      if(type === 'years'){
+        const y = __parseFirstYear(cor);
+        if(y !== null){
+          for(let k=0;k<12;k++){
+            const delta = (Math.floor(Math.random()*7)-3) || 1;
+            const ny = y + delta;
+            let fake = cor.replace(String(y), String(ny));
+            fake = fake.replace(/\s+/g,' ').trim();
+            if(fake && !poolSet.has(fake) && fake !== cor) return fake;
+          }
+        }
       }
 
-      const pairs = [];
-      chars.forEach(ch => {
-        (ch.cards || []).forEach(c => pairs.push({ node: ch, card: c }));
-      });
-      if (pairs.length < 2) return [];
+      // 2) общий текст: берём существующий вариант и портим одно слово/число
+      const base = (poolAll && poolAll.length ? poolAll[Math.floor(Math.random()*poolAll.length)] : cor) || cor;
+      const words = (base||'').toString().match(/[A-Za-zА-Яа-яЁёЭэ0-9]+/g) || [];
+      if(!words.length){
+        // fallback: добавим символ
+        const fake = (base||'') + ' (?)';
+        if(fake && !poolSet.has(fake)) return fake;
+        return fake;
+      }
 
-      const allDefs = pairs.map(p => p.card.definition).filter(Boolean);
+      // если есть число — сместим его
+      const numIdx = words.findIndex(w => /^-?\d{1,4}$/.test(w));
+      if(numIdx >= 0){
+        const n = parseInt(words[numIdx],10);
+        if(!Number.isNaN(n)){
+          for(let k=0;k<10;k++){
+            const delta = (Math.floor(Math.random()*5)-2) || 1;
+            const nn = n + delta;
+            const fakeWords = words.slice();
+            fakeWords[numIdx] = String(nn);
+            const fake = fakeWords.join(' ');
+            if(fake && !poolSet.has(fake) && fake !== cor) return fake;
+          }
+        }
+      }
 
-      const questions = [];
-      pairs.forEach(p => {
-        const card = p.card;
-        const word = (card.word || '').trim();
-        const def = (card.definition || '').trim();
-        if (!word || !def) return;
+      // меняем одно слово на другое слово из глобального корпуса
+      const corpus = window.__quizCorpusTokens || null;
+      const idx = Math.floor(Math.random()*words.length);
+      let replacement = null;
+      if(corpus && corpus.length){
+        replacement = corpus[Math.floor(Math.random()*corpus.length)];
+      }else{
+        // fallback: генерим псевдо-слово
+        const letters = 'абвгдежзиклмнопрстуфхцчшщыэюя';
+        const len = Math.max(4, Math.min(10, words[idx].length));
+        let w = '';
+        for(let i=0;i<len;i++){
+          w += letters[Math.floor(Math.random()*letters.length)];
+        }
+        replacement = w;
+      }
+      const fakeWords = words.slice();
+      fakeWords[idx] = replacement;
+      const fake = fakeWords.join(' ');
+      if(fake && !poolSet.has(fake) && fake !== cor) return fake;
 
-        const wrong = pickRandom(allDefs, 3, def);
-        const options = shuffle([def, ...wrong]).map(o => ({ id: o, text: o }));
-
-        questions.push({
-          type: 'single',
-          testType: 'term',
-          questionText: 'Выбери вариант, который лучше всего подходит к термину:\n«' + word + '»',
-          options,
-          correctIds: [def],
-          correctAnswerText: def
-        });
-      });
-      return questions;
+      // last resort
+      const fake2 = cor + ' (другое)';
+      if(fake2 && !poolSet.has(fake2)) return fake2;
+      return fake2;
     }
 
-    function buildQuestions(scope, scopeId, testType) {
-      if (testType === 'assertion')
-        return buildQuestionsForAssertion(scope, scopeId);
-      if (testType === 'years') return buildQuestionsForYears(scope, scopeId);
-      if (testType === 'olist') return buildQuestionsForOList(scope, scopeId);
-      if (testType === 'term') return buildQuestionsForTerm(scope, scopeId);
+    function __getNodePathList(nodeId){
+      const path = [];
+      let cur = getNode(nodeId);
+      while(cur && cur.id && cur.id !== state.rootId){
+        path.unshift(cur);
+        cur = getNode(cur.parentId);
+      }
+      const root = getNode(state.rootId);
+      if(root) path.unshift(root);
+      return path;
+    }
+
+    function __patternTypeLabel(t){
+      return QUIZ_LABELS[t] || t;
+    }
+
+    function __collectCorpusTokens(){
+      try{
+        const tokens = [];
+        const nodes = state && state.nodes ? Object.values(state.nodes) : [];
+        nodes.forEach(n=>{
+          if(!n || n.type !== 'characteristic') return;
+          const name = (n.name||'').toString();
+          name.match(/[A-Za-zА-Яа-яЁёЭэ]+/g)?.forEach(w=>tokens.push(normalizeTextForSearch(w)));
+          (n.cards||[]).forEach(c=>{
+            const txt = formatFactDisplay(n,c);
+            (txt||'').toString().match(/[A-Za-zА-Яа-яЁёЭэ]+/g)?.forEach(w=>tokens.push(normalizeTextForSearch(w)));
+          });
+        });
+        // чистим
+        const filtered = tokens
+          .map(t=>(t||'').trim())
+          .filter(t=>t && t.length>=3 && t.length<=16);
+        window.__quizCorpusTokens = __uniq(filtered).slice(0, 2500);
+      }catch{}
+    }
+    __collectCorpusTokens();
+
+    function getDirectCategoryCharacteristics(categoryId){
+      const node = getNode(categoryId);
+      if(!node || node.type !== 'category') return [];
+      const out = [];
+      (node.children||[]).forEach(cid=>{
+        const ch = getNode(cid);
+        if(ch && ch.type === 'characteristic') out.push(ch);
+      });
+      return out;
+    }
+
+    function collectScopeCharacteristics(scopeType, scopeId, includeSub){
+      if(scopeType === 'characteristic'){
+        const n = getNode(scopeId);
+        return n && n.type === 'characteristic' ? [n] : [];
+      }
+      if(scopeType === 'category'){
+        return includeSub ? getCategoryCharacteristics(scopeId) : getDirectCategoryCharacteristics(scopeId);
+      }
       return [];
     }
 
-    // ===== QUIZ OVERLAY LOGIC =====
+    function computeScopeStats(scopeType, scopeId, includeSub){
+      const chars = collectScopeCharacteristics(scopeType, scopeId, includeSub);
+      const byType = { assertion:{patterns:0,cards:0}, years:{patterns:0,cards:0}, olist:{patterns:0,cards:0}, term:{patterns:0,cards:0} };
+      chars.forEach(ch=>{
+        const t = ch.factType || 'assertion';
+        if(!byType[t]) byType[t] = {patterns:0,cards:0};
+        byType[t].patterns++;
+        byType[t].cards += (ch.cards||[]).length;
+      });
 
-    function startCategoryTest(categoryId, testType) {
-      const node = getNode(categoryId);
-      if (!node || node.type !== 'category') return;
-      const questions = buildQuestions('category', categoryId, testType);
-      if (!questions || !questions.length) {
-        alert('Недостаточно данных для этого теста.');
+      // "можно ли начать": нужно минимум 3 уникальных ответа в пуле
+      const canStart = {};
+      Object.keys(byType).forEach(t=>{
+        const pool = [];
+        chars.filter(ch => (ch.factType||'assertion')===t).forEach(ch=>{
+          (ch.cards||[]).forEach(c=>{
+            const qa = buildQAFromCard(ch, c, t, {direction:'forward'});
+            if(qa && qa.answer) pool.push(qa.answer);
+          });
+        });
+        const uniq = __uniq(pool);
+        canStart[t] = uniq.length >= 3;
+      });
+
+      const canMix = Object.keys(byType).some(t => canStart[t]);
+      return { chars, byType, canStart, canMix };
+    }
+
+    function buildQAFromCard(patternNode, card, type, opts){
+      const direction = (opts && opts.direction) ? opts.direction : 'forward';
+
+      if(type === 'years'){
+        const date = __formatYearsAnswer(card);
+        const ev = __formatYearsEvent(card);
+        const forward = direction !== 'reverse';
+        if(forward){
+          return {
+            promptTitle: 'Укажи дату / период для события:',
+            promptText: ev,
+            answer: date || '(нет даты)',
+            explain: formatFactDisplay(patternNode, card),
+            poolKey: 'years:evt2date'
+          };
+        }else{
+          return {
+            promptTitle: 'Что произошло в эту дату / период?',
+            promptText: date || '(нет даты)',
+            answer: ev,
+            explain: formatFactDisplay(patternNode, card),
+            poolKey: 'years:date2evt'
+          };
+        }
+      }
+
+      if(type === 'term'){
+        const w = (card && (card.word||card.term||card.title) ? (card.word||card.term||card.title)+'': '').trim();
+        const def = (card && (card.definition||card.def||card.text) ? (card.definition||card.def||card.text)+'': '').trim();
+        const forward = direction !== 'reverse';
+        if(forward){
+          return {
+            promptTitle: 'Какое слово подходит под определение?',
+            promptText: def || '(нет определения)',
+            answer: w || '(нет слова)',
+            explain: (w && def) ? ('Термин: ' + w + '\nОпределение: ' + def) : formatFactDisplay(patternNode, card),
+            poolKey: 'term:def2word'
+          };
+        }else{
+          return {
+            promptTitle: 'Что означает этот термин?',
+            promptText: w || '(нет слова)',
+            answer: def || '(нет определения)',
+            explain: (w && def) ? ('Термин: ' + w + '\nОпределение: ' + def) : formatFactDisplay(patternNode, card),
+            poolKey: 'term:word2def'
+          };
+        }
+      }
+
+      if(type === 'assertion' || type === 'olist'){
+        const raw = (card && card.text ? (card.text+'') : formatFactDisplay(patternNode, card)) || '';
+        const pair = __extractPair(raw);
+        if(pair){
+          const forward = direction !== 'reverse';
+          if(forward){
+            return {
+              promptTitle: 'Укажи продолжение / ответ для:',
+              promptText: pair.left,
+              answer: pair.right,
+              explain: raw,
+              poolKey: type + ':pair:l2r'
+            };
+          }else{
+            return {
+              promptTitle: 'К чему относится этот ответ?',
+              promptText: pair.right,
+              answer: pair.left,
+              explain: raw,
+              poolKey: type + ':pair:r2l'
+            };
+          }
+        }
+        // fallback: выбираем точный факт
+        return {
+          promptTitle: 'Выбери правильный текст:',
+          promptText: (patternNode && patternNode.name) ? ('Паттерн: ' + patternNode.name) : 'Паттерн',
+          answer: raw.trim() || '(пусто)',
+          explain: raw,
+          poolKey: type + ':full'
+        };
+      }
+
+      return null;
+    }
+
+    function buildQuestionBank(scopeType, scopeId, includeSub, selectedTypes, selectedPatternIds, opts){
+      const chars = collectScopeCharacteristics(scopeType, scopeId, includeSub);
+      const typesSet = new Set(selectedTypes || []);
+      const pattSet = new Set(selectedPatternIds || []);
+      const direction = (opts && opts.direction) ? opts.direction : 'auto';
+
+      function dirForType(t){
+        if(direction === 'forward' || direction === 'reverse') return direction;
+        // auto
+        return 'forward';
+      }
+
+      const questions = [];
+      const pools = {}; // key -> [{v, patternId}]
+      const pattPools = {}; // key -> patternId -> [v]
+
+      chars.forEach(ch=>{
+        const t = ch.factType || 'assertion';
+        if(!typesSet.has(t)) return;
+        if(pattSet.size && !pattSet.has(ch.id)) return;
+
+        const dir = dirForType(t);
+
+        (ch.cards||[]).forEach(card=>{
+          const qa = buildQAFromCard(ch, card, t, { direction: dir });
+          if(!qa || !qa.answer || !qa.promptText) return;
+
+          const q = {
+            id: (ch.id + ':' + (card.id || '') + ':' + Math.random().toString(36).slice(2,8)),
+            type: t,
+            poolKey: qa.poolKey,
+            promptTitle: qa.promptTitle,
+            promptText: qa.promptText,
+            answer: qa.answer,
+            explain: qa.explain,
+            patternId: ch.id,
+            patternName: ch.name || '(паттерн)',
+            parentCategoryId: ch.parentId || null,
+            cardId: card.id || null
+          };
+          questions.push(q);
+
+          pools[q.poolKey] = pools[q.poolKey] || [];
+          pools[q.poolKey].push({ v: q.answer, patternId: ch.id });
+
+          pattPools[q.poolKey] = pattPools[q.poolKey] || {};
+          pattPools[q.poolKey][ch.id] = pattPools[q.poolKey][ch.id] || [];
+          pattPools[q.poolKey][ch.id].push(q.answer);
+        });
+      });
+
+      // уникализируем пулы
+      Object.keys(pools).forEach(k=>{
+        pools[k] = __uniq(pools[k].map(x=>x.v));
+      });
+      Object.keys(pattPools).forEach(k=>{
+        Object.keys(pattPools[k]).forEach(pid=>{
+          pattPools[k][pid] = __uniq(pattPools[k][pid]);
+        });
+      });
+
+      // фильтруем вопросы, где нельзя собрать 2 реальных отвлекающих
+      const filtered = questions.filter(q=>{
+        const pool = pools[q.poolKey] || [];
+        const others = pool.filter(v=>v !== q.answer);
+        return others.length >= 2;
+      });
+
+      return { questions: filtered, pools, pattPools };
+    }
+
+    function pickSmartDistractors(q, pools, pattPools, needed){
+      const poolAll = (pools[q.poolKey] || []).filter(v => v !== q.answer);
+      const poolSame = (pattPools[q.poolKey] && q.patternId && pattPools[q.poolKey][q.patternId])
+        ? (pattPools[q.poolKey][q.patternId].filter(v => v !== q.answer))
+        : [];
+
+      const candidates = __uniq(poolSame.concat(poolAll));
+      if(!candidates.length) return [];
+
+      // years: ближе по числу
+      if(q.type === 'years'){
+        const y = __parseFirstYear(q.answer);
+        if(y !== null){
+          const scored = candidates.map(v=>{
+            const yy = __parseFirstYear(v);
+            const d = (yy===null) ? 99999 : Math.abs(yy - y);
+            return { v, s: -d };
+          }).sort((a,b)=>b.s-a.s);
+          return scored.slice(0,needed).map(x=>x.v);
+        }
+      }
+
+      // остальное: похожесть текста
+      const scored = candidates.map(v=>({ v, s: __stringSim(q.answer, v) + (poolSame.includes(v) ? 0.25 : 0) }))
+        .sort((a,b)=>b.s-a.s);
+
+      // чуть рандомизации, чтобы не было всегда одинаково
+      const top = scored.slice(0, Math.max(needed*4, 12));
+      const mixed = __shuffle(top).sort((a,b)=>b.s-a.s);
+      return mixed.slice(0,needed).map(x=>x.v);
+    }
+
+    function buildChoicesForQuestion(q, pools, pattPools, mode){
+      const poolAll = (pools[q.poolKey] || []);
+      const realNeeded = 2;
+      let distractors = [];
+
+      if(mode === 'ordered'){
+        distractors = __shuffle(poolAll.filter(v=>v !== q.answer)).slice(0, realNeeded);
+      }else{
+        distractors = pickSmartDistractors(q, pools, pattPools, realNeeded);
+        if(distractors.length < realNeeded){
+          const rest = __shuffle(poolAll.filter(v=>v !== q.answer && !distractors.includes(v))).slice(0, realNeeded - distractors.length);
+          distractors = distractors.concat(rest);
+        }
+      }
+
+      const fake = __makeFakeAnswer(q.type, q.answer, poolAll.concat(distractors));
+      const choices = __shuffle([q.answer].concat(distractors).concat([fake]));
+
+      const correctIndex = choices.indexOf(q.answer);
+      return { choices, correctIndex, fake };
+    }
+
+    let quizSetupState = null;
+    let quizSession = null;
+
+    function openQuizSetup(scopeType, scopeId, preselectTypes){
+      if(!quizSetupModalEl) return;
+
+      const scopeNode = getNode(scopeId);
+      const scopeName = scopeNode ? (scopeNode.name || (scopeNode.type==='category'?'Категория':'Паттерн')) : '...';
+
+      quizSetupState = {
+        scopeType,
+        scopeId,
+        selectedTypes: new Set(),
+        selectedPatternIds: new Set()
+      };
+
+      // prefs
+      const prefs = loadQuizPrefs() || {};
+      const defIncludeSub = (scopeType === 'category') ? (prefs.includeSub !== false) : false;
+      const defLimit = (typeof prefs.limit === 'number' ? prefs.limit : 20);
+      const defMode = (prefs.mode === 'ordered' ? 'ordered' : 'smart');
+      const defDir = (prefs.direction === 'reverse' ? 'reverse' : (prefs.direction === 'forward' ? 'forward' : 'auto'));
+      const defExplain = (prefs.explain !== false);
+
+      chkQuizIncludeSubEl.checked = !!defIncludeSub;
+      chkQuizIncludeSubEl.disabled = (scopeType !== 'category');
+
+      quizQuestionLimitEl.value = String(Math.max(5, Math.min(200, defLimit)));
+
+      Array.from(quizModeSegEl.querySelectorAll('button')).forEach(b=>{
+        b.classList.toggle('active', b.dataset.mode === defMode);
+      });
+      Array.from(quizDirectionSegEl.querySelectorAll('button')).forEach(b=>{
+        b.classList.toggle('active', b.dataset.dir === defDir);
+      });
+      chkQuizShowExplainEl.checked = !!defExplain;
+
+      // types
+      const stats = computeScopeStats(scopeType, scopeId, chkQuizIncludeSubEl.checked);
+
+      // preselect: if passed, otherwise use prefs lastTypes or mix
+      let preset = preselectTypes && preselectTypes.length ? preselectTypes : (prefs.lastTypes || ['mix']);
+      preset = Array.isArray(preset) ? preset : ['mix'];
+
+      if(preset.includes('mix')){
+        quizSetupState.selectedTypes = new Set(['assertion','years','olist','term']);
+      }else{
+        preset.forEach(t=>{ if(['assertion','years','olist','term'].includes(t)) quizSetupState.selectedTypes.add(t); });
+        if(!quizSetupState.selectedTypes.size) quizSetupState.selectedTypes = new Set(['assertion','years','olist','term']);
+      }
+
+      // types UI
+      updateQuizTypeButtons();
+
+      // patterns default selected: all patterns for selected types
+      const allPatterns = stats.chars.filter(ch => quizSetupState.selectedTypes.has(ch.factType || 'assertion'));
+      allPatterns.forEach(ch => quizSetupState.selectedPatternIds.add(ch.id));
+      // but if scope is a single pattern, lock
+      if(scopeType === 'characteristic'){
+        quizSetupState.selectedPatternIds = new Set([scopeId]);
+      }
+
+      quizSetupTitleEl.textContent = 'ТЕСТЫ — ' + (scopeType === 'category' ? 'отсек' : 'паттерн');
+      quizSetupSubtitleEl.textContent = scopeName;
+
+      // render pattern list
+      quizPatternFilterEl.value = '';
+      renderQuizPatternList();
+
+      updateQuizSetupHint();
+
+      quizSetupModalEl.style.display = 'flex';
+      setTimeout(()=>{ quizPatternFilterEl.focus(); }, 0);
+    }
+
+    function closeQuizSetup(){
+      if(quizSetupModalEl) quizSetupModalEl.style.display = 'none';
+      quizSetupState = null;
+    }
+
+    function openQuizModal(){
+      if(quizModalEl) quizModalEl.style.display = 'flex';
+    }
+    function closeQuizModal(){
+      if(quizModalEl) quizModalEl.style.display = 'none';
+      quizSession = null;
+    }
+
+    function updateQuizTypeButtons(){
+      if(!quizTypeSegEl || !quizSetupState) return;
+      const sel = quizSetupState.selectedTypes;
+      Array.from(quizTypeSegEl.querySelectorAll('button')).forEach(b=>{
+        const t = b.dataset.qtype;
+        if(t === 'mix'){
+          const on = sel.size === 4;
+          b.classList.toggle('active', on);
+        }else{
+          b.classList.toggle('active', sel.has(t));
+        }
+      });
+    }
+
+    function renderQuizPatternList(){
+      if(!quizSetupState || !quizPatternListEl) return;
+
+      const includeSub = chkQuizIncludeSubEl.checked;
+      const stats = computeScopeStats(quizSetupState.scopeType, quizSetupState.scopeId, includeSub);
+      const filter = (quizPatternFilterEl.value || '').trim().toLowerCase();
+      const selTypes = quizSetupState.selectedTypes;
+
+      const patterns = stats.chars
+        .filter(ch => selTypes.has(ch.factType || 'assertion'))
+        .filter(ch => !filter || (ch.name||'').toLowerCase().includes(filter));
+
+      quizPatternListEl.innerHTML = '';
+      if(!patterns.length){
+        const p = document.createElement('div');
+        p.className = 'hint';
+        p.textContent = 'Нет паттернов под выбранные типы.';
+        quizPatternListEl.appendChild(p);
         return;
       }
-      quizState = {
-        scope: 'category',
-        scopeId: categoryId,
-        testType,
-        questions: shuffle(questions),
-        currentIndex: 0,
-        total: questions.length,
-        correctCount: 0
-      };
-      quizHeaderTitleEl.textContent = 'Тест по категории: ' + (node.name || '');
-      showQuiz();
+
+      patterns.sort((a,b)=>{
+        const ta = a.factType || 'assertion';
+        const tb = b.factType || 'assertion';
+        if(ta !== tb) return ta.localeCompare(tb);
+        return (a.name||'').localeCompare((b.name||''));
+      });
+
+      patterns.forEach(ch=>{
+        const row = document.createElement('div');
+        row.className = 'quiz-pattern-item';
+        row.dataset.id = ch.id;
+
+        const left = document.createElement('div');
+        left.className = 'quiz-pattern-left';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = quizSetupState.selectedPatternIds.has(ch.id);
+        cb.onchange = () => {
+          if(cb.checked) quizSetupState.selectedPatternIds.add(ch.id);
+          else quizSetupState.selectedPatternIds.delete(ch.id);
+          updateQuizSetupHint();
+        };
+
+        const name = document.createElement('div');
+        name.className = 'quiz-pattern-name';
+        name.textContent = ch.name || '(без названия)';
+
+        left.appendChild(cb);
+        left.appendChild(name);
+
+        const meta = document.createElement('div');
+        meta.className = 'quiz-pattern-meta';
+        const t = ch.factType || 'assertion';
+        meta.textContent = __patternTypeLabel(t) + ' · ' + ((ch.cards||[]).length);
+
+        row.appendChild(left);
+        row.appendChild(meta);
+
+        row.onclick = (e) => {
+          // allow clicking row to toggle
+          if(e.target && (e.target.tagName||'').toLowerCase() === 'input') return;
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        };
+
+        quizPatternListEl.appendChild(row);
+      });
     }
 
-    function startCharacteristicTest(charId, testType) {
-      const node = getNode(charId);
-      if (!node || node.type !== 'characteristic') return;
-      const questions = buildQuestions('characteristic', charId, testType);
-      if (!questions || !questions.length) {
-        alert('Недостаточно данных для теста.');
+    function updateQuizSetupHint(){
+      if(!quizSetupState || !quizSetupHintEl) return;
+      const includeSub = chkQuizIncludeSubEl.checked;
+      const stats = computeScopeStats(quizSetupState.scopeType, quizSetupState.scopeId, includeSub);
+
+      const selTypes = Array.from(quizSetupState.selectedTypes);
+      const selPats = Array.from(quizSetupState.selectedPatternIds);
+
+      let possible = 0;
+      let dropped = 0;
+
+      const { questions } = buildQuestionBank(
+        quizSetupState.scopeType,
+        quizSetupState.scopeId,
+        includeSub,
+        selTypes,
+        selPats,
+        { direction: getActiveSegValue(quizDirectionSegEl, 'dir', 'auto') }
+      );
+
+      // посчитаем всё до лимита
+      possible = questions.length;
+
+      // ограничение по лимиту
+      const lim = parseInt(quizQuestionLimitEl.value,10);
+      const limit = (!Number.isNaN(lim) && lim > 0) ? lim : 20;
+
+      const show = Math.min(limit, possible);
+
+      const typeNames = selTypes.map(t=>__patternTypeLabel(t)).join(' · ');
+      quizSetupHintEl.textContent =
+        'Выбрано: ' + selPats.length + ' паттернов. ' +
+        'Типы: ' + typeNames + '. ' +
+        'Вопросов доступно: ' + possible + '. ' +
+        'В тесте будет: ' + show + '.';
+
+      btnQuizStart.disabled = possible < 1;
+    }
+
+    function getActiveSegValue(segEl, attr, fallback){
+      if(!segEl) return fallback;
+      const b = segEl.querySelector('button.active');
+      return b ? (b.dataset[attr] || fallback) : fallback;
+    }
+
+    function startQuizWithConfig(cfg){
+      const includeSub = !!cfg.includeSub;
+      const types = cfg.types || [];
+      const patternIds = cfg.patternIds || [];
+      const mode = cfg.mode || 'smart';
+      const direction = cfg.direction || 'auto';
+      const showExplain = cfg.showExplain !== false;
+
+      const bank = buildQuestionBank(cfg.scopeType, cfg.scopeId, includeSub, types, patternIds, { direction });
+
+      let questions = bank.questions.slice();
+
+      if(!questions.length){
+        alert('Недостаточно данных для теста. Нужно хотя бы 3 разных ответа внутри выбранных паттернов.');
         return;
       }
-      quizState = {
-        scope: 'characteristic',
-        scopeId: charId,
-        testType,
-        questions: shuffle(questions),
-        currentIndex: 0,
-        total: questions.length,
-        correctCount: 0
+
+      if(mode === 'smart'){
+        questions = __shuffle(questions);
+      }
+
+      // limit
+      const lim = parseInt(cfg.limit,10);
+      const limit = (!Number.isNaN(lim) && lim > 0) ? lim : 20;
+      questions = questions.slice(0, Math.min(limit, questions.length));
+
+      // build choices
+      questions = questions.map(q=>{
+        const built = buildChoicesForQuestion(q, bank.pools, bank.pattPools, mode);
+        return {
+          ...q,
+          choices: built.choices,
+          correctIndex: built.correctIndex,
+          fakeAnswer: built.fake
+        };
+      });
+
+      const scopeNode = getNode(cfg.scopeId);
+      const scopeName = scopeNode ? (scopeNode.name || '') : '';
+      const typeTitle = (types.length >= 4) ? 'СБОРНАЯ СОЛЯНКА' : types.map(t=>__patternTypeLabel(t)).join(' · ');
+
+      quizSession = {
+        scopeType: cfg.scopeType,
+        scopeId: cfg.scopeId,
+        scopeName,
+        title: typeTitle,
+        includeSub,
+        mode,
+        direction,
+        showExplain,
+        bank,
+        config: { ...cfg },
+        questions,
+        idx: 0,
+        answers: {}, // qid -> {selectedIndex, isCorrect}
+        correct: 0,
+        startedAt: Date.now()
       };
-      quizHeaderTitleEl.textContent = 'Тест: ' + (node.name || '');
-      showQuiz();
-    }
 
-    function showQuiz() {
-      renderQuiz();
-      document.getElementById('appRoot').style.display = 'none';
-      quizScreenEl.style.display = 'flex';
-    }
-
-    function exitQuiz() {
-      quizState = null;
-      quizScreenEl.style.display = 'none';
-      document.getElementById('appRoot').style.display = 'grid';
-    }
-
-    function restartQuiz() {
-      if (!quizState) return;
-      quizState.questions = shuffle(quizState.questions);
-      quizState.currentIndex = 0;
-      quizState.correctCount = 0;
+      openQuizModal();
       renderQuiz();
     }
 
-    function renderQuiz() {
-      if (!quizState) return;
-      const { questions, currentIndex, total } = quizState;
-      const q = questions[currentIndex];
+    function startQuizQuick(scopeType, scopeId, typeOrMix){
+      const includeSub = (scopeType === 'category');
+      const stats = computeScopeStats(scopeType, scopeId, includeSub);
 
-      quizProgressEl.textContent = 'Вопрос ' + (currentIndex + 1) + ' из ' + total;
-      quizQuestionEl.textContent = q.questionText || '';
-      quizOptionsEl.innerHTML = '';
-      quizMessageEl.textContent = '';
-      btnQuizNext.classList.add('btn-hidden');
+      let types = [];
+      if(typeOrMix === 'mix'){
+        types = ['assertion','years','olist','term'].filter(t => stats.canStart[t]);
+        if(!types.length){
+          alert('В этом месте пока не хватает данных для тестов.');
+          return;
+        }
+      }else{
+        types = [typeOrMix];
+        if(!stats.canStart[typeOrMix]){
+          alert('Для этого типа теста нужно хотя бы 3 разных ответа внутри выбранной области.');
+          return;
+        }
+      }
 
-      if (q.type === 'single') {
-        q._answered = false;
-        q.options.forEach(opt => {
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-option';
-          btn.textContent = opt.text || '';
-          btn.dataset.id = opt.id;
-          btn.onclick = () => {
-            if (q._answered) return;
-            q._answered = true;
-            const isCorrect = q.correctIds.includes(opt.id);
-            if (isCorrect) {
-              quizState.correctCount++;
-            }
-            Array.from(quizOptionsEl.children).forEach(b => {
-              const id = b.dataset.id;
-              if (q.correctIds.includes(id)) {
-                b.classList.add('btn-option-correct');
-              }
-            });
-            if (!isCorrect) {
-              btn.classList.add('btn-option-wrong');
-            }
+      // patterns: all in scope for those types
+      const chars = collectScopeCharacteristics(scopeType, scopeId, includeSub);
+      const patternIds = chars.filter(ch => types.includes(ch.factType || 'assertion')).map(ch => ch.id);
 
-            if (isCorrect) {
-              quizMessageEl.textContent = 'Верно! 👍';
-            } else {
-              quizMessageEl.textContent =
-                'Неверно. Правильный ответ: ' + (q.correctAnswerText || '');
-            }
-            btnQuizNext.classList.remove('btn-hidden');
-          };
-          quizOptionsEl.appendChild(btn);
-        });
-      } else if (q.type === 'multi') {
-        q._selected = new Set();
-        q._answered = false;
+      const prefs = loadQuizPrefs() || {};
+      const limit = (typeof prefs.limit === 'number' ? prefs.limit : 20);
+      const mode = (prefs.mode === 'ordered' ? 'ordered' : 'smart');
+      const direction = (prefs.direction === 'reverse' ? 'reverse' : (prefs.direction === 'forward' ? 'forward' : 'auto'));
+      const showExplain = (prefs.explain !== false);
 
-        q.options.forEach(opt => {
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-option';
-          btn.textContent = opt.text || '';
-          btn.dataset.id = opt.id;
-          btn.onclick = () => {
-            if (q._answered) return;
-            if (q._selected.has(opt.id)) {
-              q._selected.delete(opt.id);
-              btn.classList.remove('btn-option-selected');
-            } else {
-              q._selected.add(opt.id);
-              btn.classList.add('btn-option-selected');
-            }
-          };
-          quizOptionsEl.appendChild(btn);
-        });
+      startQuizWithConfig({
+        scopeType,
+        scopeId,
+        includeSub,
+        types,
+        patternIds,
+        limit,
+        mode,
+        direction,
+        showExplain
+      });
+    }
 
-        const btnCheck = document.createElement('button');
-        btnCheck.className = 'btn btn-sm btn-primary';
-        btnCheck.textContent = 'Готово / проверить';
-        btnCheck.onclick = () => {
-          if (q._answered) return;
-          q._answered = true;
-          const selected = Array.from(q._selected || []);
-          const correctSet = new Set(q.correctIds || []);
-          const selectedSet = new Set(selected);
-          let allCorrect = true;
-          if (correctSet.size !== selectedSet.size) {
-            allCorrect = false;
-          } else {
-            for (const id of correctSet) {
-              if (!selectedSet.has(id)) {
-                allCorrect = false;
-                break;
-              }
-            }
+    function renderQuiz(){
+      if(!quizSession || !quizModalEl) return;
+
+      const qTotal = quizSession.questions.length;
+      const idx = quizSession.idx;
+
+      // end screen
+      if(idx >= qTotal){
+        const spent = Math.max(1, Math.round((Date.now() - quizSession.startedAt)/1000));
+        quizTitleEl.textContent = 'РЕЗУЛЬТАТ — ' + (quizSession.title || 'ТЕСТ');
+        quizProgressEl.textContent = quizSession.correct + '/' + qTotal + ' · ' + spent + ' сек';
+
+        quizQuestionTitleEl.textContent = 'Готово.';
+        quizPromptTextEl.textContent =
+          'Правильных: ' + quizSession.correct + ' из ' + qTotal + '\n' +
+          'Ошибок: ' + (qTotal - quizSession.correct) + '\n\n' +
+          'Хочешь — повтори только ошибки или начни заново.';
+
+        quizChoicesEl.innerHTML = '';
+        const row = document.createElement('div');
+        row.style.display = 'grid';
+        row.style.gap = '8px';
+
+        const btnRetryWrong = document.createElement('button');
+        btnRetryWrong.className = 'btn btn-sm btn-primary';
+        btnRetryWrong.textContent = 'Повторить ошибки';
+        btnRetryWrong.onclick = () => {
+          const wrong = quizSession.questions.filter(qq => {
+            const a = quizSession.answers[qq.id];
+            return a && !a.isCorrect;
+          });
+          if(!wrong.length){
+            alert('Ошибок нет :)');
+            return;
           }
 
-          Array.from(quizOptionsEl.children).forEach(b => {
-            const id = b.dataset.id;
-            if (!id) return;
-            if (correctSet.has(id)) {
-              b.classList.add('btn-option-correct');
-            } else if (selectedSet.has(id)) {
-              b.classList.add('btn-option-wrong');
-            }
+          const rebuilt = wrong.map(qq => {
+            const built = buildChoicesForQuestion(qq, quizSession.bank.pools, quizSession.bank.pattPools, quizSession.mode);
+            return { ...qq, choices: built.choices, correctIndex: built.correctIndex, fakeAnswer: built.fake };
           });
 
-          if (allCorrect) {
-            quizState.correctCount++;
-            quizMessageEl.textContent = 'Все правильные пункты выбраны! 👍';
-          } else {
-            quizMessageEl.textContent =
-              'Есть ошибки. Правильные пункты:\n' +
-              (q.correctAnswerText || '');
-          }
-          btnQuizNext.classList.remove('btn-hidden');
+          quizSession.questions = rebuilt;
+          quizSession.idx = 0;
+          quizSession.answers = {};
+          quizSession.correct = 0;
+          quizSession.startedAt = Date.now();
+          renderQuiz();
         };
-        quizOptionsEl.appendChild(btnCheck);
+const btnRestart = document.createElement('button');
+        btnRestart.className = 'btn btn-sm btn-ghost';
+        btnRestart.textContent = 'Начать заново';
+        btnRestart.onclick = () => {
+          if(quizSession && quizSession.config){
+            startQuizWithConfig(quizSession.config);
+          }
+        };
+
+        row.appendChild(btnRetryWrong);
+        row.appendChild(btnRestart);
+        quizChoicesEl.appendChild(row);
+
+        quizMessageEl.style.display = 'none';
+        quizMetaEl.style.display = 'none';
+
+        btnQuizPrev.disabled = true;
+        btnQuizNext.textContent = 'Закрыть';
+        btnQuizNext.disabled = false;
+        btnQuizNext.onclick = () => closeQuizModal();
+        return;
       }
+
+      const q = quizSession.questions[idx];
+      const a = quizSession.answers[q.id] || null;
+
+      quizTitleEl.textContent = 'ТЕСТ — ' + (quizSession.title || '');
+      quizProgressEl.textContent = (idx+1) + '/' + qTotal + ' · ' + quizSession.correct + '✔';
+
+      quizQuestionTitleEl.textContent = q.promptTitle;
+      quizPromptTextEl.textContent = q.promptText;
+
+      // meta
+      quizMetaEl.innerHTML = '';
+      const left = document.createElement('div');
+      left.textContent = 'Паттерн: ' + (q.patternName || '');
+      const right = document.createElement('div');
+      const pathList = __getNodePathList(q.patternId);
+      const pathStr = pathList.map(n=>n.name||'').filter(Boolean).join(' → ');
+      right.textContent = pathStr ? ('Путь: ' + pathStr) : '';
+      quizMetaEl.appendChild(left);
+      quizMetaEl.appendChild(right);
+      quizMetaEl.style.display = 'flex';
+
+      // choices
+      quizChoicesEl.innerHTML = '';
+      quizMessageEl.style.display = 'none';
+
+      const buttons = [];
+
+      q.choices.forEach((choice, i)=>{
+        const b = document.createElement('button');
+        b.className = 'quiz-choice';
+        b.type = 'button';
+        b.textContent = choice;
+
+        const isAnswered = !!a;
+        if(isAnswered) b.disabled = true;
+
+        b.onclick = () => {
+          if(quizSession.answers[q.id]) return;
+
+          const isCorrect = (i === q.correctIndex);
+          quizSession.answers[q.id] = { selectedIndex: i, isCorrect };
+          if(isCorrect) quizSession.correct++;
+
+          // paint
+          buttons.forEach((bb, bi)=>{
+            bb.disabled = true;
+            if(bi === q.correctIndex) bb.classList.add('correct');
+            if(bi === i && bi !== q.correctIndex) bb.classList.add('wrong');
+          });
+
+          // message
+          if(quizSession.showExplain){
+            quizMessageEl.style.display = 'block';
+            quizMessageEl.textContent =
+              (isCorrect ? 'Верно.' : 'Неверно.') + '\n' +
+              'Правильный ответ: ' + q.choices[q.correctIndex] + '\n\n' +
+              (q.explain || '');
+          }else{
+            quizMessageEl.style.display = 'block';
+            quizMessageEl.textContent =
+              (isCorrect ? 'Верно.' : 'Неверно.') + '\n' +
+              'Правильный ответ: ' + q.choices[q.correctIndex];
+          }
+
+          btnQuizNext.disabled = false;
+          btnQuizNext.focus();
+        };
+
+        buttons.push(b);
+        quizChoicesEl.appendChild(b);
+      });
+
+      // if revisiting answered
+      if(a){
+        buttons.forEach((bb, bi)=>{
+          bb.disabled = true;
+          if(bi === q.correctIndex) bb.classList.add('correct');
+          if(bi === a.selectedIndex && bi !== q.correctIndex) bb.classList.add('wrong');
+        });
+        quizMessageEl.style.display = 'block';
+        quizMessageEl.textContent =
+          (a.isCorrect ? 'Верно.' : 'Неверно.') + '\n' +
+          'Правильный ответ: ' + q.choices[q.correctIndex] + '\n\n' +
+          (quizSession.showExplain ? (q.explain||'') : '');
+      }
+
+      btnQuizPrev.disabled = (idx <= 0);
+      btnQuizPrev.onclick = () => {
+        if(quizSession.idx > 0){
+          quizSession.idx--;
+          renderQuiz();
+        }
+      };
+
+      btnQuizNext.textContent = (idx === qTotal-1 ? 'Результат' : 'Дальше');
+      btnQuizNext.disabled = !a; // until answered
+      btnQuizNext.onclick = () => {
+        if(idx < qTotal){
+          quizSession.idx++;
+          renderQuiz();
+        }
+      };
     }
 
-    function goToNextQuestion() {
-      if (!quizState) return;
-      quizState.currentIndex++;
-      if (quizState.currentIndex >= quizState.total) {
-        alert(
-          'Тест завершён.\n' +
-          'Правильных ответов: ' +
-          quizState.correctCount +
-          ' из ' +
-          quizState.total
-        );
-        exitQuiz();
-      } else {
-        renderQuiz();
-      }
+    // Setup modal events
+    if(btnQuizSetupClose) btnQuizSetupClose.onclick = closeQuizSetup;
+    if(btnQuizSetupCancel) btnQuizSetupCancel.onclick = closeQuizSetup;
+
+    if(quizTypeSegEl){
+      quizTypeSegEl.addEventListener('click', (e)=>{
+        const b = e.target.closest('button');
+        if(!b || !quizSetupState) return;
+        const t = b.dataset.qtype;
+        if(!t) return;
+
+        if(t === 'mix'){
+          quizSetupState.selectedTypes = new Set(['assertion','years','olist','term']);
+        }else{
+          if(quizSetupState.selectedTypes.has(t)) quizSetupState.selectedTypes.delete(t);
+          else quizSetupState.selectedTypes.add(t);
+          if(!quizSetupState.selectedTypes.size){
+            quizSetupState.selectedTypes.add(t);
+          }
+          // если выбраны все 4 => считаем как mix
+          if(quizSetupState.selectedTypes.size === 4){
+            // nothing
+          }
+        }
+        updateQuizTypeButtons();
+
+        // auto adjust pattern selection: keep existing selection if still visible, else add required
+        const includeSub = chkQuizIncludeSubEl.checked;
+        const stats = computeScopeStats(quizSetupState.scopeType, quizSetupState.scopeId, includeSub);
+        const allowed = new Set(stats.chars.filter(ch => quizSetupState.selectedTypes.has(ch.factType||'assertion')).map(ch=>ch.id));
+        // remove disallowed
+        Array.from(quizSetupState.selectedPatternIds).forEach(pid=>{
+          if(!allowed.has(pid)) quizSetupState.selectedPatternIds.delete(pid);
+        });
+        // if nothing selected -> select all allowed
+        if(!quizSetupState.selectedPatternIds.size){
+          allowed.forEach(pid=>quizSetupState.selectedPatternIds.add(pid));
+        }
+
+        renderQuizPatternList();
+        updateQuizSetupHint();
+      });
     }
 
-    // ===== CREATE MODAL =====
+    if(chkQuizIncludeSubEl){
+      chkQuizIncludeSubEl.addEventListener('change', ()=>{
+        if(!quizSetupState) return;
+        renderQuizPatternList();
+        updateQuizSetupHint();
+      });
+    }
+
+    if(quizPatternFilterEl){
+      quizPatternFilterEl.addEventListener('input', ()=>{
+        renderQuizPatternList();
+      });
+    }
+
+    if(btnQuizSelectAll){
+      btnQuizSelectAll.onclick = ()=>{
+        if(!quizSetupState) return;
+        const includeSub = chkQuizIncludeSubEl.checked;
+        const stats = computeScopeStats(quizSetupState.scopeType, quizSetupState.scopeId, includeSub);
+        stats.chars
+          .filter(ch => quizSetupState.selectedTypes.has(ch.factType||'assertion'))
+          .forEach(ch => quizSetupState.selectedPatternIds.add(ch.id));
+        renderQuizPatternList();
+        updateQuizSetupHint();
+      };
+    }
+    if(btnQuizClearAll){
+      btnQuizClearAll.onclick = ()=>{
+        if(!quizSetupState) return;
+        quizSetupState.selectedPatternIds.clear();
+        renderQuizPatternList();
+        updateQuizSetupHint();
+      };
+    }
+
+    if(quizQuestionLimitEl){
+      quizQuestionLimitEl.addEventListener('input', ()=>{
+        updateQuizSetupHint();
+      });
+    }
+
+    if(quizModeSegEl){
+      quizModeSegEl.addEventListener('click', (e)=>{
+        const b = e.target.closest('button');
+        if(!b) return;
+        Array.from(quizModeSegEl.querySelectorAll('button')).forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        updateQuizSetupHint();
+      });
+    }
+
+    if(quizDirectionSegEl){
+      quizDirectionSegEl.addEventListener('click', (e)=>{
+        const b = e.target.closest('button');
+        if(!b) return;
+        Array.from(quizDirectionSegEl.querySelectorAll('button')).forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        updateQuizSetupHint();
+      });
+    }
+
+    if(btnQuizStart){
+      btnQuizStart.onclick = ()=>{
+        if(!quizSetupState) return;
+
+        const includeSub = chkQuizIncludeSubEl.checked;
+        const types = Array.from(quizSetupState.selectedTypes);
+        const patternIds = Array.from(quizSetupState.selectedPatternIds);
+
+        const mode = getActiveSegValue(quizModeSegEl, 'mode', 'smart');
+        const direction = getActiveSegValue(quizDirectionSegEl, 'dir', 'auto');
+        const lim = parseInt(quizQuestionLimitEl.value,10);
+        const limit = (!Number.isNaN(lim) && lim>0) ? lim : 20;
+        const showExplain = chkQuizShowExplainEl.checked;
+
+        // persist prefs
+        const prefs = loadQuizPrefs() || {};
+        prefs.includeSub = includeSub;
+        prefs.limit = limit;
+        prefs.mode = mode;
+        prefs.direction = direction;
+        prefs.explain = showExplain;
+        prefs.lastTypes = (types.length >= 4 ? ['mix'] : types);
+        saveQuizPrefs(prefs);
+
+        const cfg = {
+          scopeType: quizSetupState.scopeType,
+          scopeId: quizSetupState.scopeId,
+          includeSub,
+          types,
+          patternIds,
+          limit,
+          mode,
+          direction,
+          showExplain
+        };
+        closeQuizSetup();
+        startQuizWithConfig(cfg);
+      };
+    }
+
+    // Quiz modal events
+    if(btnQuizExit) btnQuizExit.onclick = () => closeQuizModal();
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        if(quizModalEl && quizModalEl.style.display === 'flex'){
+          closeQuizModal();
+        }else if(quizSetupModalEl && quizSetupModalEl.style.display === 'flex'){
+          closeQuizSetup();
+        }
+      }
+    });
+
+// ===== END QUIZ SYSTEM =====
+
+// ===== CREATE MODAL =====
 
     let createDialogState = null;
     let createConfigScope = 'subject';
@@ -5440,60 +7088,9 @@ if (btnCreateRootCategory) btnCreateRootCategory.onclick = () => {
       render();
     };
 
-    // quiz buttons
-    btnQuizExit.onclick = () => exitQuiz();
-    // Кнопка «Уточнить»: показать, в каком отсеке лежит паттерн текущего вопроса
-    function getNodePathString(nodeId) {
-      const parts = [];
-      let n = getNode(nodeId);
-      while (n) {
-        parts.unshift(n.name || '(без названия)');
-        if (!n.parentId) break;
-        n = getNode(n.parentId);
-      }
-      return parts.join(' → ');
-    }
+        // (quiz / facts buttons removed)
 
-    if (btnQuizClarify) {
-      btnQuizClarify.onclick = () => {
-        if (!quizState) return;
-        const q = quizState.questions[quizState.currentIndex];
-        const srcId = q && q.sourceNodeId ? q.sourceNodeId : null;
-        const src = srcId ? getNode(srcId) : null;
-        const parent = src && src.parentId ? getNode(src.parentId) : null;
-        if (parent) {
-          quizMessageEl.textContent = 'Отсек: ' + (parent.name || '(без названия)') + '\nПуть: ' + getNodePathString(parent.id);
-        } else if (src) {
-          quizMessageEl.textContent = 'Путь: ' + getNodePathString(src.id);
-        } else {
-          quizMessageEl.textContent = 'Не удалось определить отсек для этого вопроса.';
-        }
-      };
-    }
-
-    btnQuizRestart.onclick = () => restartQuiz();
-    btnQuizNext.onclick = () => goToNextQuestion();
-
-    // facts buttons
-    btnFactsClose.onclick = () => exitFacts();
-    btnFactPrev.onclick = () => {
-      if (!factsState) return;
-      if (factsState.currentIndex > 0) {
-        factsState.currentIndex--;
-        renderFacts();
-      }
-    };
-    btnFactNext.onclick = () => {
-      if (!factsState) return;
-      if (factsState.currentIndex < factsState.items.length - 1) {
-        factsState.currentIndex++;
-        renderFacts();
-      }
-    };
-
-    // ===== Экран выбора корня =====
-
-    function renderRootsScreen() {
+function renderRootsScreen() {
       if (!rootsListEl) return;
 
       rootsListEl.innerHTML = '';
@@ -5650,8 +7247,6 @@ if (btnCreateRootCategory) btnCreateRootCategory.onclick = () => {
         row.appendChild(label);
 
         row.onclick = () => {
-          quizState = null;
-          factsState = null;
           sidebarViewNodeId = node.id;
           currentNodeId = node.id;
           render();
@@ -5721,8 +7316,6 @@ if (btnCreateRootCategory) btnCreateRootCategory.onclick = () => {
         row.appendChild(label);
 
         row.onclick = () => {
-          quizState = null;
-          factsState = null;
           sidebarViewNodeId = node.id;
           currentNodeId = node.id;
           render();
@@ -6672,10 +8265,6 @@ if (btnCreateRootCategory) btnCreateRootCategory.onclick = () => {
       } else if (node.parentId) {
         sidebarViewNodeId = node.parentId;
       }
-
-      quizState = null;
-      factsState = null;
-
       // подсветим найденное в деталях, но НЕ будем дергать экран при наборе текста
       const q = (globalSearchInputEl && globalSearchInputEl.value) ? globalSearchInputEl.value : '';
       __activeSearchHighlight = (q || '').trim();
@@ -7231,9 +8820,6 @@ const sub = document.createElement('div');
           const source = item.dataset.source || 'user';
 
           // Сначала сброс тестов/фактов
-          quizState = null;
-          factsState = null;
-
           if (source === 'dev') {
             if (!window.__developerState || !window.__developerState.nodes) {
               alert('Корни разработчика ещё не загружены.');
