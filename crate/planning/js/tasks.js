@@ -17,11 +17,41 @@ function parseTags(raw){
     .slice(0, 8);
 }
 
+function parseFilterTags(raw){
+  return String(raw ?? "")
+    .split(",")
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function pad2(n){ return String(n).padStart(2, "0"); }
+function formatLocalISO(d){
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function parseISOToLocalDate(iso){
+  const s = String(iso ?? "").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y,m,day] = s.split("-").map(Number);
+  return new Date(y, (m||1)-1, day||1);
+}
+function addDaysLocal(d, days){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + Number(days||0));
+  return x;
+}
+
 export class Tasks {
   constructor(store, ui) {
     this.store = store;
     this.ui = ui;
     this.search = "";
+    this.filters = {
+      tags: "",
+      priority: "all",
+      deadline: "all",
+      sort: "default",
+    };
     this.boardEl = null;
 
     document.addEventListener("planning:projectChanged", () => {
@@ -31,6 +61,17 @@ export class Tasks {
 
   setSearch(q) {
     this.search = String(q ?? "").trim().toLowerCase();
+  }
+
+  setFilters(partial){
+    const p = partial && typeof partial === "object" ? partial : {};
+    this.filters = {
+      ...this.filters,
+      tags: typeof p.tags === "string" ? p.tags : this.filters.tags,
+      priority: typeof p.priority === "string" ? p.priority : this.filters.priority,
+      deadline: typeof p.deadline === "string" ? p.deadline : this.filters.deadline,
+      sort: typeof p.sort === "string" ? p.sort : this.filters.sort,
+    };
   }
 
   openCreateModal() {
@@ -124,12 +165,64 @@ export class Tasks {
 
     const all = state.tasks.filter(t => t.projectId === pid);
 
-    const filtered = this.search
-      ? all.filter(t => {
-          const hay = `${t.name} ${t.desc} ${(t.tags || []).join(" ")}`.toLowerCase();
-          return hay.includes(this.search);
-        })
-      : all;
+    const colById = new Map(cols.map(c => [c.id, c]));
+
+    // precompute date boundaries (local)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayISO = formatLocalISO(today);
+    const weekEnd = addDaysLocal(today, 7);
+    const weekEndTime = weekEnd.getTime();
+
+    const f = this.filters || {};
+    const q = this.search;
+    const wantTags = parseFilterTags(f.tags);
+    const wantPriority = String(f.priority || "all");
+    const wantDeadline = String(f.deadline || "all");
+
+    const filtered = all.filter(t => {
+      // search (name/desc/tags)
+      if(q){
+        const hay = `${t.name} ${t.desc} ${(t.tags || []).join(" ")}`.toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
+
+      // tags (AND: every tag must exist in task tags)
+      if(wantTags.length){
+        const taskTags = (t.tags || []).map(x => String(x).toLowerCase());
+        for(const tag of wantTags){
+          if(!taskTags.includes(tag)) return false;
+        }
+      }
+
+      // priority
+      if(wantPriority !== "all"){
+        if(String(t.priority || "").toLowerCase() !== wantPriority) return false;
+      }
+
+      // deadline filters
+      if(wantDeadline !== "all"){
+        const d = parseISOToLocalDate(t.deadline);
+        if(!d) return false;
+
+        const time = d.getTime();
+        const isDone = colById.get(t.columnId)?.role === "done";
+
+        if(wantDeadline === "today"){
+          if(formatLocalISO(d) !== todayISO) return false;
+        }
+        if(wantDeadline === "overdue"){
+          // overdue means: deadline < today AND not in done column
+          if(isDone) return false;
+          if(time >= today.getTime()) return false;
+        }
+        if(wantDeadline === "week"){
+          if(time < today.getTime() || time > weekEndTime) return false;
+        }
+      }
+
+      return true;
+    });
 
     boardEl.innerHTML = "";
     boardEl.hidden = false;
@@ -142,6 +235,41 @@ export class Tasks {
       return;
     }
 
+    const sortMode = String(f.sort || "default");
+    const priorityRank = { high: 3, mid: 2, low: 1 };
+    const sortBy = (a, b) => {
+      if(sortMode === "newest"){
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      }
+
+      const ad = a.deadline ? String(a.deadline) : "";
+      const bd = b.deadline ? String(b.deadline) : "";
+      const aHasD = Boolean(ad);
+      const bHasD = Boolean(bd);
+
+      if(sortMode === "priority"){
+        const ap = priorityRank[String(a.priority||"").toLowerCase()] || 0;
+        const bp = priorityRank[String(b.priority||"").toLowerCase()] || 0;
+        if(bp !== ap) return bp - ap;
+        // tie-breaker: earliest deadline first, then newest
+        if(aHasD !== bHasD) return aHasD ? -1 : 1;
+        const dcmp = ad.localeCompare(bd);
+        if(dcmp) return dcmp;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      }
+
+      if(sortMode === "deadline" || sortMode === "default"){
+        // tasks without deadline go last
+        if(aHasD !== bHasD) return aHasD ? -1 : 1;
+        const dcmp = ad.localeCompare(bd);
+        if(dcmp) return dcmp;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      }
+
+      // fallback: newest
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    };
+
     for (const col of cols) {
       const colEl = document.createElement("section");
       colEl.className = "column";
@@ -149,7 +277,7 @@ export class Tasks {
 
       const items = filtered
         .filter(t => t.columnId === col.id)
-        .sort((a, b) => (a.deadline || "").localeCompare(b.deadline || "") || (b.createdAt - a.createdAt));
+        .sort(sortBy);
 
       colEl.innerHTML = `
         <div class="column__head">

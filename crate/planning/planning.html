@@ -50,6 +50,31 @@
       <div class="planning-toolbar">
         <select id="projectSelect" class="ctl" aria-label="Project"></select>
         <input id="searchInput" class="ctl" type="search" placeholder="поиск задач…" aria-label="Search" />
+
+        <input id="tagsFilter" class="ctl" type="text" placeholder="tags: study, work" aria-label="Filter by tags" />
+
+        <select id="priorityFilter" class="ctl" aria-label="Filter by priority">
+          <option value="all">priority: all</option>
+          <option value="high">priority: high</option>
+          <option value="mid">priority: mid</option>
+          <option value="low">priority: low</option>
+        </select>
+
+        <select id="deadlineFilter" class="ctl" aria-label="Filter by deadline">
+          <option value="all">deadline: all</option>
+          <option value="today">deadline: today</option>
+          <option value="overdue">deadline: overdue</option>
+          <option value="week">deadline: week</option>
+        </select>
+
+        <select id="sortSelect" class="ctl" aria-label="Sort tasks">
+          <option value="default">sort: default</option>
+          <option value="deadline">sort: deadline</option>
+          <option value="priority">sort: priority</option>
+          <option value="newest">sort: newest</option>
+        </select>
+
+        <button class="btn btn--thin" id="clearFilters" type="button">clear</button>
         <select id="viewSelect" class="ctl" aria-label="View">
           <option value="board">board</option>
           <option value="schedule">schedule</option>

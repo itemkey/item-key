@@ -54,6 +54,14 @@
   align-items: center;
 }
 
+/* Filters toolbar: many controls, so keep them a bit tighter */
+.planning-toolbar .ctl{ min-width: 160px; }
+
+.btn--thin{
+  padding: 10px 10px;
+  min-width: 0;
+}
+
 .ctl{
   border: 1px solid rgba(0,0,0,.14);
   background: rgba(255,255,255,.86);
@@ -367,3 +375,210 @@
 .page-planning .card--done .btn:hover{
   opacity: .75;
 }
+
+/* ===========================
+   MODAL FORMS — HARD OVERRIDES
+   Fixes: overflow / misaligned buttons / broken grids / color picker UI
+   =========================== */
+
+.page-planning .modal__panel{
+  /* prevent inner grids from pushing buttons outside the panel */
+  overflow: hidden;
+}
+
+.page-planning .modal__body{
+  max-height: 72vh;
+  overflow: auto;
+}
+
+/* In toolbars we want min-width, but inside modals it breaks layouts */
+.page-planning .modal .ctl{
+  min-width: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Stable form layout (global styles.css may override .form) */
+.page-planning .modal .form{
+  display: grid;
+  gap: 12px;
+}
+
+.page-planning .modal .form__grid2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 560px){
+  .page-planning .modal .form__grid2{
+    grid-template-columns: 1fr;
+  }
+}
+
+.page-planning .modal .form__actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Make TEXTAREA behave nicely inside the modal */
+.page-planning .modal textarea.ctl{
+  resize: vertical;
+}
+
+/* ===========================
+   COLUMNS: row sizing + color picker
+   =========================== */
+
+.page-planning .cols-row{
+  /* the previous 60px column + .ctl min-width caused overflow;
+     keep a strict, predictable grid */
+  grid-template-columns: minmax(180px, 1fr) 54px 86px 136px;
+}
+
+/* Color input must be a swatch, not a stretched control */
+.page-planning input[type="color"].cols-color{
+  min-width: 0 !important;
+  width: 54px !important;
+  height: 38px;
+  padding: 0 !important;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.86);
+  cursor: pointer;
+}
+.page-planning input[type="color"].cols-color::-webkit-color-swatch-wrapper{
+  padding: 4px;
+}
+.page-planning input[type="color"].cols-color::-webkit-color-swatch{
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 8px;
+}
+.page-planning input[type="color"].cols-color::-moz-color-swatch{
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 8px;
+}
+
+/* Smaller action buttons in rows */
+.page-planning .cols-actions .btn{
+  padding: 10px 10px;
+}
+
+/* ==================================================
+   MODAL LAYOUT V2 — NO HORIZONTAL SCROLL, CLEAN FORMS
+   (overrides aggressive global styles.css rules)
+   ================================================== */
+
+.page-planning *,
+.page-planning *::before,
+.page-planning *::after{ box-sizing: border-box; }
+
+/* Panel width: big enough for 'Columns', responsive everywhere */
+.page-planning .modal__panel{
+  width: min(1040px, calc(100vw - 56px)) !important;
+  margin: 6vh auto !important;
+}
+@media (max-width: 620px){
+  .page-planning .modal__panel{
+    width: calc(100vw - 28px) !important;
+    margin: 4vh auto !important;
+  }
+}
+
+/* Body: only vertical scroll if реально нужно */
+.page-planning .modal__body{
+  max-height: calc(100vh - 170px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 14px !important;
+}
+
+/* Kill any inherited multi-column form layouts inside modals */
+.page-planning .modal .form{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-auto-flow: row !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+.page-planning .modal .form > *{ min-width: 0 !important; }
+
+/* Controls inside modals should never have a forced width */
+.page-planning .modal .ctl{
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* Two-field row (deadline/priority) stays 2 columns on desktop */
+.page-planning .modal .form__grid2{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+@media (max-width: 720px){
+  .page-planning .modal .form__grid2{
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Actions: always inside the panel, wraps if needed */
+.page-planning .modal .form__actions{
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+/* Columns modal has "add" on the left, save/close on the right */
+.page-planning .modal [data-cols-form] .form__actions{
+  justify-content: space-between !important;
+}
+
+/* ===== Columns rows: strict grid, no overflow ===== */
+.page-planning .cols-list{ overflow-x: hidden !important; }
+.page-planning .cols-row{
+  grid-template-columns: minmax(240px, 1fr) 64px minmax(96px, 120px) 156px !important;
+  gap: 12px !important;
+}
+@media (max-width: 860px){
+  .page-planning .cols-row{
+    grid-template-columns: 1fr 64px 1fr !important;
+    grid-template-areas:
+      "name color done"
+      "actions actions actions";
+  }
+  .page-planning .cols-row .cols-name{ grid-area: name; }
+  .page-planning .cols-row .cols-color{ grid-area: color; }
+  .page-planning .cols-row .cols-done{ grid-area: done; }
+  .page-planning .cols-row .cols-actions{ grid-area: actions; justify-content: flex-start !important; }
+}
+
+/* Swatch-style color control */
+.page-planning input[type="color"].cols-color{
+  width: 64px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 10px;
+}
+
+/* Row action buttons must be compact, not stretching the grid */
+.page-planning .cols-actions{
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+.page-planning .cols-actions .btn{
+  width: 44px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  letter-spacing: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+}
+

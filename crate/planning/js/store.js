@@ -25,7 +25,18 @@ export class Store {
       activeProjectId: null,
       projects: [],
       tasks: [],
-      events: []
+      events: [],
+      ui: {
+        // persisted UI prefs (filters, sort, view)
+        taskFilters: {
+          q: "",
+          tags: "",
+          priority: "all",
+          deadline: "all",
+          sort: "default",
+        },
+        view: "board",
+      }
     };
   }
 
@@ -34,6 +45,22 @@ export class Store {
     if (!Array.isArray(this.state.projects)) this.state.projects = [];
     if (!Array.isArray(this.state.tasks)) this.state.tasks = [];
     if (!Array.isArray(this.state.events)) this.state.events = [];
+
+    // Ensure UI state exists
+    if (!this.state.ui || typeof this.state.ui !== "object") {
+      this.state.ui = { taskFilters: { q: "", tags: "", priority: "all", deadline: "all", sort: "default" }, view: "board" };
+    }
+    if (!this.state.ui.taskFilters || typeof this.state.ui.taskFilters !== "object") {
+      this.state.ui.taskFilters = { q: "", tags: "", priority: "all", deadline: "all", sort: "default" };
+    }
+    // Normalize known keys (safe for old saved states)
+    const tf = this.state.ui.taskFilters;
+    if (typeof tf.q !== "string") tf.q = "";
+    if (typeof tf.tags !== "string") tf.tags = "";
+    if (!["all", "low", "mid", "high"].includes(String(tf.priority))) tf.priority = "all";
+    if (!["all", "today", "overdue", "week"].includes(String(tf.deadline))) tf.deadline = "all";
+    if (!["default", "deadline", "priority", "newest"].includes(String(tf.sort))) tf.sort = "default";
+    if (!["board", "schedule"].includes(String(this.state.ui.view))) this.state.ui.view = "board";
 
     // Ensure each project has columns
     for (const p of this.state.projects) {
@@ -48,6 +75,9 @@ export class Store {
 
     // Migrate tasks: status -> columnId
     for (const t of this.state.tasks) {
+      // ensure createdAt for sorting
+      if (typeof t.createdAt !== "number") t.createdAt = Date.now();
+
       if (t.columnId) continue;
 
       const proj = this.state.projects.find(p => p.id === t.projectId);
